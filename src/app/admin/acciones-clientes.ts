@@ -1,26 +1,22 @@
 "use server";
 
 import { randomUUID } from "node:crypto";
-import { cookies } from "next/headers";
 import { getPublicos } from "@/lib/autos";
+import { getAgencia } from "@/lib/agencia";
 import { guardarPrivado, leerPrivado } from "@/lib/almacen";
 import { conCandado } from "@/lib/candado";
 import { borrarCliente, emailValido, guardarClienteAgencia, leerClientes, normalizarEmail } from "@/lib/clientes";
 import { enviarMail, mailNovedades, urlSitio } from "@/lib/mail";
-import { COOKIE_SESION, tokenValido } from "@/lib/sesion";
+import { requerirUsuario } from "@/lib/usuarios";
 import { tokenBaja } from "@/lib/sesion-cliente";
 
 type Resultado = { ok: true; mensaje: string; id?: string } | { ok: false; error: string };
 
-async function verificarSesion() {
-  if (!(await tokenValido((await cookies()).get(COOKIE_SESION)?.value))) {
-    throw new Error("Tu sesión se cerró. Volvé a ingresar con tu usuario y contraseña.");
-  }
-}
+const verificarSesion = (rol?: "admin") => requerirUsuario(rol);
 
 const msgError = (e: unknown) => {
   const m = e instanceof Error ? e.message : "";
-  if (m.startsWith("Tu sesión") || m.startsWith("Ya hay") || m.startsWith("No encontramos")) return m;
+  if (m.startsWith("Tu sesión") || m.startsWith("Ya hay") || m.startsWith("No encontramos") || m.startsWith("No tenés permiso")) return m;
   console.error(e);
   return "No se pudo guardar. Probá de nuevo.";
 };
@@ -51,7 +47,7 @@ export async function guardarClienteAccion(id: string | null, d: Record<string, 
 
 export async function borrarClienteAccion(id: string): Promise<Resultado> {
   try {
-    await verificarSesion();
+    await verificarSesion("admin");
     await borrarCliente(id);
     return { ok: true, mensaje: "Se borró el cliente." };
   } catch (e) {
@@ -72,6 +68,7 @@ export type Envio = {
 };
 
 export async function leerEnvios(): Promise<Envio[]> {
+  await verificarSesion("admin");
   return (await leerPrivado<Envio[]>("mails")) ?? [];
 }
 
@@ -99,19 +96,19 @@ export async function enviarMailAccion(d: {
   autos: string[];
 }): Promise<Resultado> {
   try {
-    await verificarSesion();
+    await verificarSesion("admin");
     const asunto = texto(d.asunto, 150);
     const mensaje = texto(d.mensaje, 5000);
     if (!asunto) return { ok: false, error: "Escribí el asunto (el título del mail)." };
     if (!mensaje) return { ok: false, error: "Escribí el mensaje." };
-    const publicos = await getPublicos();
+    const [publicos, ag] = await Promise.all([getPublicos(), getAgencia()]);
     const autos = (Array.isArray(d.autos) ? d.autos : []).map((id) => publicos.find((a) => a.id === id)).filter((a) => !!a).slice(0, 6);
 
     if (d.destino === "prueba") {
       const email = normalizarEmail(texto(d.emailPrueba, 120));
       if (!emailValido(email)) return { ok: false, error: "Escribí un email válido para la prueba." };
-      const m = mailNovedades({ nombre: "", asunto: `[Prueba] ${asunto}`, mensaje, autos });
-      await enviarMail({ para: email, asunto: m.asunto, html: m.html, texto: m.texto });
+      const m = mailNovedades(ag, { nombre: "", asunto: `[Prueba] ${asunto}`, mensaje, autos });
+      await enviarMail({ para: email, asunto: m.asunto, html: m.html, texto: m.texto, nombreAgencia: ag.nombre });
       return { ok: true, mensaje: `Se mandó la prueba a ${email}. Revisá tu casilla.` };
     }
 
@@ -135,8 +132,8 @@ export async function enviarMailAccion(d: {
       for (const c of destinatarios) {
         try {
           const linkBaja = c.aceptaMails ? `${urlSitio()}/baja?t=${tokenBaja(c.id)}` : undefined;
-          const m = mailNovedades({ nombre: c.nombre, asunto, mensaje, autos, linkBaja });
-          await enviarMail({ para: c.email, asunto: m.asunto, html: m.html, texto: m.texto, linkBaja });
+          const m = mailNovedades(ag, { nombre: c.nombre, asunto, mensaje, autos, linkBaja });
+          await enviarMail({ para: c.email, asunto: m.asunto, html: m.html, texto: m.texto, linkBaja, nombreAgencia: ag.nombre });
           enviados++;
         } catch (e) {
           console.error("Falló el envío a", c.email, e);

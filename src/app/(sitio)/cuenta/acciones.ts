@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { actualizarPerfil, emailValido, ingresoCliente, normalizarEmail } from "@/lib/clientes";
 import { enviarMail, mailCodigo } from "@/lib/mail";
+import { getAgencia } from "@/lib/agencia";
 import { cerrarSesionCliente, generarCodigo, idClienteActual, iniciarSesionCliente, verificarCodigo } from "@/lib/sesion-cliente";
 
 type R = { ok: true; completarPerfil?: boolean } | { ok: false; error: string };
@@ -15,8 +16,9 @@ export async function pedirCodigo(emailCrudo: string): Promise<R> {
   const codigo = generarCodigo(email, ip);
   if (!codigo) return { ok: false, error: "Pediste muchos códigos. Esperá un rato y probá de nuevo." };
   try {
-    const m = mailCodigo(codigo);
-    await enviarMail({ para: email, asunto: m.asunto, html: m.html, texto: m.texto });
+    const ag = await getAgencia();
+    const m = mailCodigo(ag, codigo);
+    await enviarMail({ para: email, asunto: m.asunto, html: m.html, texto: m.texto, nombreAgencia: ag.nombre });
     return { ok: true };
   } catch (e) {
     console.error(e);

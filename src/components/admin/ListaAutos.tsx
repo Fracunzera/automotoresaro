@@ -36,7 +36,7 @@ const COLOR_ESTADO: Record<Estado, string> = {
   retirado: "bg-stone-200 text-stone-700",
 };
 
-export function ListaAutos({ filas }: { filas: FilaAuto[] }) {
+export function ListaAutos({ filas, esAdmin }: { filas: FilaAuto[]; esAdmin: boolean }) {
   const router = useRouter();
   const [cargando, start] = useTransition();
   const [error, setError] = useState("");
@@ -91,8 +91,8 @@ export function ListaAutos({ filas }: { filas: FilaAuto[] }) {
               </div>
             </div>
 
-            {/* Datos privados */}
-            <div className="border-t-2 border-linea bg-papel px-4 py-3 text-lg">
+            {/* Datos privados (solo administradores) */}
+            {esAdmin && <div className="border-t-2 border-linea bg-papel px-4 py-3 text-lg">
               {tipo === "consignacion" ? (
                 <p>
                   <b>De un cliente</b>{dueno && <> ({dueno})</>}
@@ -115,7 +115,7 @@ export function ListaAutos({ filas }: { filas: FilaAuto[] }) {
               {retiro && (
                 <p>{retiro.texto}{retiro.cobrado > 0 && <> · cobraste <b>{pesos(retiro.cobrado)}</b></>}</p>
               )}
-            </div>
+            </div>}
 
             {/* Acciones */}
             <div className="grid grid-cols-2 gap-2 border-t-2 border-linea p-3 sm:flex sm:flex-wrap">
@@ -143,7 +143,7 @@ export function ListaAutos({ filas }: { filas: FilaAuto[] }) {
                   {a.estado === "oculto" ? "Publicar" : "Volver a poner en venta"}
                 </button>
               )}
-              {consignacion && a.estado !== "vendido" && a.estado !== "retirado" && (
+              {esAdmin && consignacion && a.estado !== "vendido" && a.estado !== "retirado" && (
                 <button
                   disabled={cargando}
                   onClick={() => { setMotivo(""); setCobrado(0); setRetirando(fila); }}
@@ -152,10 +152,10 @@ export function ListaAutos({ filas }: { filas: FilaAuto[] }) {
                   El dueño lo retiró
                 </button>
               )}
-              {consignacion && (
+              {esAdmin && consignacion && (
                 <a href={`/admin/contrato/${a.id}`} target="_blank" className="btn-g border-2 border-stone-300 bg-white hover:border-tinta">Contrato</a>
               )}
-              {(a.estado === "oculto" || a.estado === "vendido" || a.estado === "retirado") && (
+              {esAdmin && (a.estado === "oculto" || a.estado === "vendido" || a.estado === "retirado") && (
                 <button disabled={cargando} onClick={() => setBorrando(a)} className="btn-g border-2 border-stone-300 bg-white text-rojo-oscuro hover:border-rojo">Borrar</button>
               )}
               {(a.estado === "publicado" || a.estado === "reservado") && (

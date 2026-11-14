@@ -2,9 +2,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ClienteForm } from "@/components/admin/ClienteForm";
 import { getCliente } from "@/lib/clientes";
+import { usuarioActual } from "@/lib/usuarios";
 
 export default async function EditarCliente({ params }: { params: Promise<{ id: string }> }) {
-  const c = await getCliente((await params).id);
+  const [c, yo] = await Promise.all([getCliente((await params).id), usuarioActual()]);
   if (!c) notFound();
   return (
     <div>
@@ -13,6 +14,7 @@ export default async function EditarCliente({ params }: { params: Promise<{ id: 
       <ClienteForm
         id={c.id}
         origenWeb={c.origen === "web"}
+        puedeBorrar={yo?.rol === "admin"}
         inicial={{ email: c.email, nombre: c.nombre, telefono: c.telefono, ciudad: c.ciudad, notas: c.notas, aceptaMails: c.aceptaMails }}
       />
     </div>

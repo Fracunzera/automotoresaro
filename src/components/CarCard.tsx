@@ -1,7 +1,9 @@
+"use client";
+
 import Link from "next/link";
 import type { Auto } from "@/lib/tipos";
 import type { Financiacion } from "@/lib/negocio-tipos";
-import { site } from "@/config/site";
+import { useAgencia } from "./AgenciaContext";
 import { Icon } from "./Icon";
 import { BotonFavorito } from "./cuenta/ClienteContext";
 import { cuotaMensual, formatKm, formatNumero } from "@/lib/utils";
@@ -29,6 +31,7 @@ export function CarCard({ auto, fin }: { auto: Auto; fin: Financiacion }) {
   const plazoMax = Math.max(...plazos);
   const cuota = cuotaMensual(auto.precio * (1 - anticipoMinimo), plazoMax, tna);
   const tag = etiqueta(auto);
+  const { ciudad } = useAgencia();
 
   return (
     <Link
@@ -68,7 +71,7 @@ export function CarCard({ auto, fin }: { auto: Auto; fin: Financiacion }) {
       <div className="mx-4 mt-auto flex items-center justify-between gap-3 border-t border-linea py-2.5 text-[13px] text-stone-500">
         <span>{auto.transmision} · {auto.combustible}</span>
         <span className="flex items-center gap-1 whitespace-nowrap">
-          <Icon name="pin" className="size-4" /> {site.ciudad}
+          <Icon name="pin" className="size-4" /> {ciudad}
         </span>
       </div>
     </Link>

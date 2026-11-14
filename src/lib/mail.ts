@@ -6,7 +6,7 @@
  * Sin SMTP_HOST, los mails no se envían: se muestran en la consola del servidor (para probar).
  */
 import nodemailer, { type Transporter } from "nodemailer";
-import { site } from "@/config/site";
+import type { Agencia } from "./agencia-tipos";
 import type { Auto } from "./tipos";
 import { formatKm, formatNumero } from "./utils";
 
@@ -33,13 +33,13 @@ const absoluta = (u: string) => (u.startsWith("http") ? u : `${urlSitio()}${u}`)
 const escapar = (t: string) =>
   t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
-export async function enviarMail(m: { para: string; asunto: string; html: string; texto: string; linkBaja?: string }) {
+export async function enviarMail(m: { para: string; asunto: string; html: string; texto: string; linkBaja?: string; nombreAgencia?: string }) {
   if (!mailConfigurado()) {
     console.log(`\n[mail no enviado: falta SMTP] Para: ${m.para}\nAsunto: ${m.asunto}\n${m.texto}\n`);
     return;
   }
   await getTransporte().sendMail({
-    from: process.env.MAIL_FROM || `${site.nombre} <no-responder@localhost>`,
+    from: process.env.MAIL_FROM || `${m.nombreAgencia ?? "Agencia"} <no-responder@localhost>`,
     to: m.para,
     subject: m.asunto,
     html: m.html,
@@ -50,28 +50,29 @@ export async function enviarMail(m: { para: string; asunto: string; html: string
 
 /* ───────────── Plantillas ───────────── */
 
-function marco(contenido: string, pie: string) {
+function marco(ag: Agencia, contenido: string, pie: string) {
   return `<!doctype html><html lang="es"><body style="margin:0;background:#f3f2ef;font-family:Arial,Helvetica,sans-serif;color:#15171a">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f3f2ef;padding:24px 12px"><tr><td align="center">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background:#ffffff;border-radius:8px;overflow:hidden">
 <tr><td style="background:#15171a;padding:18px 24px;font-size:22px;font-weight:bold;letter-spacing:-0.5px;color:#ffffff;text-transform:uppercase">
-${escapar(site.nombre.split(" ").slice(0, -1).join(" "))} <span style="color:#d12b1f">${escapar(site.nombre.split(" ").pop() ?? "")}</span></td></tr>
+${escapar(ag.nombre.split(" ").slice(0, -1).join(" "))} <span style="color:#d12b1f">${escapar(ag.nombre.split(" ").pop() ?? "")}</span></td></tr>
 <tr><td style="padding:28px 24px;font-size:16px;line-height:1.55">${contenido}</td></tr>
 <tr><td style="padding:18px 24px;background:#f3f2ef;font-size:12px;line-height:1.5;color:#6b6b6b">${pie}</td></tr>
 </table></td></tr></table></body></html>`;
 }
 
-const pieBase = () =>
-  `${escapar(site.nombre)} · ${escapar(site.direccion)}, ${escapar(site.ciudad)}, ${escapar(site.provincia)} · ${escapar(site.telefono)}`;
+const pieBase = (ag: Agencia) =>
+  `${escapar(ag.nombre)} · ${escapar(ag.direccion)}, ${escapar(ag.ciudad)}, ${escapar(ag.provincia)} · ${escapar(ag.telefono)}`;
 
-export function mailCodigo(codigo: string) {
+export function mailCodigo(ag: Agencia, codigo: string) {
   const html = marco(
-    `<p style="margin:0 0 12px">Tu código para entrar a ${escapar(site.nombre)} es:</p>
+    ag,
+    `<p style="margin:0 0 12px">Tu código para entrar a ${escapar(ag.nombre)} es:</p>
 <p style="margin:0 0 16px;font-size:36px;font-weight:bold;letter-spacing:8px">${codigo}</p>
 <p style="margin:0;color:#6b6b6b">Vence en 15 minutos. Si no lo pediste, ignorá este mail.</p>`,
-    pieBase(),
+    pieBase(ag),
   );
-  return { asunto: `Tu código de ingreso: ${codigo}`, html, texto: `Tu código para entrar a ${site.nombre} es ${codigo}. Vence en 15 minutos.` };
+  return { asunto: `Tu código de ingreso: ${codigo}`, html, texto: `Tu código para entrar a ${ag.nombre} es ${codigo}. Vence en 15 minutos.` };
 }
 
 function tarjetaAuto(a: Auto) {
@@ -89,14 +90,14 @@ function tarjetaAuto(a: Auto) {
 }
 
 /** Mail de novedades escrito desde el panel. */
-export function mailNovedades(o: { nombre: string; asunto: string; mensaje: string; autos: Auto[]; linkBaja?: string }) {
+export function mailNovedades(ag: Agencia, o: { nombre: string; asunto: string; mensaje: string; autos: Auto[]; linkBaja?: string }) {
   const parrafos = o.mensaje
     .split(/\n{2,}/)
     .map((p) => `<p style="margin:0 0 14px">${escapar(p).replace(/\n/g, "<br>")}</p>`)
     .join("");
   const saludo = o.nombre ? `<p style="margin:0 0 14px">Hola ${escapar(o.nombre.split(" ")[0])},</p>` : "";
-  const pie = `${pieBase()}${o.linkBaja ? `<br>Recibís este mail porque aceptaste recibir novedades. <a href="${o.linkBaja}" style="color:#6b6b6b">No quiero recibir más mails</a>.` : ""}`;
-  const html = marco(`${saludo}${parrafos}${o.autos.map(tarjetaAuto).join("")}`, pie);
+  const pie = `${pieBase(ag)}${o.linkBaja ? `<br>Recibís este mail porque aceptaste recibir novedades. <a href="${o.linkBaja}" style="color:#6b6b6b">No quiero recibir más mails</a>.` : ""}`;
+  const html = marco(ag, `${saludo}${parrafos}${o.autos.map(tarjetaAuto).join("")}`, pie);
   const texto = [
     o.nombre ? `Hola ${o.nombre.split(" ")[0]},` : "",
     o.mensaje,

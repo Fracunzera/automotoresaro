@@ -39,7 +39,7 @@ function Seccion({ n, titulo, ayuda, children }: { n: number; titulo: string; ay
   );
 }
 
-export function AutoForm({ auto, negocioInicial, ajustes }: { auto?: Auto; negocioInicial: NegocioAuto; ajustes: Ajustes }) {
+export function AutoForm({ auto, negocioInicial, ajustes, esAdmin }: { auto?: Auto; negocioInicial: NegocioAuto; ajustes: Ajustes; esAdmin: boolean }) {
   const router = useRouter();
   const [d, setD] = useState<DatosAuto>(() => (auto ? { ...VACIO, ...auto } : VACIO));
   const [neg, setNeg] = useState<NegocioAuto>(negocioInicial);
@@ -167,7 +167,7 @@ export function AutoForm({ auto, negocioInicial, ajustes }: { auto?: Auto; negoc
         <CampoPesos id="precio" label="Precio de contado" valor={d.precio} onChange={(v) => set("precio", v)} requerido ayuda="Es el precio que se ve en la página." />
       </Seccion>
 
-      <Seccion n={4} titulo="Datos del negocio" ayuda="🔒 Esto es privado: solo lo ves vos en el panel, nunca aparece en la página.">
+      {esAdmin && <Seccion n={4} titulo="Datos del negocio" ayuda="🔒 Esto es privado: solo lo ves vos en el panel, nunca aparece en la página.">
         <Opciones
           label="¿De quién es el auto?"
           opciones={["propio", "consignacion"] as const}
@@ -303,9 +303,9 @@ export function AutoForm({ auto, negocioInicial, ajustes }: { auto?: Auto; negoc
           <label htmlFor="notas" className="etiqueta-g">Notas privadas <span className="font-normal text-stone-500">(opcional)</span></label>
           <textarea id="notas" rows={3} value={neg.notas} onChange={(e) => setN("notas", e.target.value)} className="campo-g h-auto! py-3" placeholder="Ej: el dueño acepta ofertas desde $…; falta cambiar cubiertas" />
         </div>
-      </Seccion>
+      </Seccion>}
 
-      <Seccion n={5} titulo="Más detalles" ayuda="Opcional, pero ayuda a vender.">
+      <Seccion n={esAdmin ? 5 : 4} titulo="Más detalles" ayuda="Opcional, pero ayuda a vender.">
         <div className="grid gap-6 sm:grid-cols-2">
           <div>
             <label htmlFor="motor" className="etiqueta-g">Motor</label>
@@ -385,7 +385,7 @@ export function AutoForm({ auto, negocioInicial, ajustes }: { auto?: Auto; negoc
         )}
       </div>
 
-      {auto && (
+      {auto && esAdmin && (
         <div className="pt-6">
           <button type="button" onClick={() => setBorrar(true)} className="btn-g w-full border-2 border-stone-300 bg-white text-rojo-oscuro hover:border-rojo">
             Borrar este auto

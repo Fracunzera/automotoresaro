@@ -1,5 +1,6 @@
 "use client";
 
+import { useAgencia } from "./AgenciaContext";
 import { useState, type FormEvent } from "react";
 import { whatsappLink } from "@/lib/utils";
 import { Icon } from "./Icon";
@@ -18,6 +19,7 @@ const pasos = ["Tu auto", "Estado", "Tus datos"];
 export function SellForm({ inicial }: { inicial: Partial<Datos> }) {
   const [paso, setPaso] = useState(0);
   const [enviado, setEnviado] = useState(false);
+  const { whatsapp } = useAgencia();
   const [d, setD] = useState<Datos>({
     marca: "", modelo: "", version: "", anio: "", km: "", combustible: "Nafta", transmision: "Manual",
     estado: "", choques: "No", nombre: "", zona: "", comentarios: "", modo: "venta",
@@ -37,7 +39,7 @@ export function SellForm({ inicial }: { inicial: Partial<Datos> }) {
       d.comentarios && `• ${d.comentarios}`,
       `Soy ${d.nombre}, de ${d.zona}.`,
     ].filter(Boolean).join("\n");
-    window.open(whatsappLink(mensaje), "_blank", "noopener,noreferrer");
+    window.open(whatsappLink(whatsapp, mensaje), "_blank", "noopener,noreferrer");
     setEnviado(true);
   }
 

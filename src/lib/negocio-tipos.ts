@@ -52,6 +52,8 @@ export interface NegocioAuto {
   /** Se completa al marcarlo como vendido. */
   precioVenta?: number;
   fechaVenta?: string;
+  /** Quién lo vendió (nombre del usuario del panel). */
+  vendidoPor?: string;
   notas: string;
 
   /** Patente (privada: no se muestra en la página). */

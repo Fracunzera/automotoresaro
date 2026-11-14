@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getTodos } from "@/lib/autos";
 import { leerClientes } from "@/lib/clientes";
+import { usuarioActual } from "@/lib/usuarios";
 import { ListaClientes, type FilaCliente } from "@/components/admin/ListaClientes";
 
 type SP = Promise<Record<string, string | string[] | undefined>>;
@@ -8,7 +9,8 @@ type SP = Promise<Record<string, string | string[] | undefined>>;
 export default async function ClientesPage({ searchParams }: { searchParams: SP }) {
   const sp = await searchParams;
   const ok = typeof sp.ok === "string" ? sp.ok.slice(0, 300) : undefined;
-  const [clientes, autos] = await Promise.all([leerClientes(), getTodos()]);
+  const [clientes, autos, yo] = await Promise.all([leerClientes(), getTodos(), usuarioActual()]);
+  const esAdmin = yo?.rol === "admin";
   const nombreAuto = (id: string) => {
     const a = autos.find((x) => x.id === id);
     return a ? `${a.marca} ${a.modelo} ${a.anio}` : null;
@@ -35,7 +37,7 @@ export default async function ClientesPage({ searchParams }: { searchParams: SP 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-3xl font-bold">Clientes</h1>
         <div className="flex flex-wrap gap-2">
-          <Link href="/admin/mails" className="btn-g border-2 border-tinta bg-white hover:bg-papel">Mandar un mail</Link>
+          {esAdmin && <Link href="/admin/mails" className="btn-g border-2 border-tinta bg-white hover:bg-papel">Mandar un mail</Link>}
           <Link href="/admin/clientes/nuevo" className="btn-g bg-rojo text-white hover:bg-rojo-oscuro">+ Agregar cliente</Link>
         </div>
       </div>
@@ -46,7 +48,7 @@ export default async function ClientesPage({ searchParams }: { searchParams: SP 
       {ok && (
         <p role="status" className="mt-5 rounded-lg border-2 border-[#9fd3b2] bg-[#e7f4ec] p-4 text-lg font-semibold text-[#17733c]">✓ {ok}</p>
       )}
-      <ListaClientes filas={filas} />
+      <ListaClientes filas={filas} esAdmin={esAdmin} />
     </div>
   );
 }

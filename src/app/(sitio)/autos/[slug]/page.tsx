@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { getAgencia } from "@/lib/agencia";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { site } from "@/config/site";
@@ -33,7 +34,7 @@ const inspeccion: [string, string[]][] = [
 export default async function AutoPage({ params }: { params: Params }) {
   const auto = await getPorSlug((await params).slug);
   if (!auto) notFound();
-  const [autos, fin] = await Promise.all([getPublicos(), getFinanciacion()]);
+  const [autos, fin, ag] = await Promise.all([getPublicos(), getFinanciacion(), getAgencia()]);
 
   const titulo = `${tituloAuto(auto)} ${auto.anio}`;
   const { tna, anticipoMinimo, plazos } = fin;
@@ -167,7 +168,7 @@ export default async function AutoPage({ params }: { params: Params }) {
 
             <div className="mt-5 space-y-2">
               <a
-                href={whatsappLink(`Hola, me interesa el ${titulo} (${formatKm(auto.km)}) que vi en la web. ¿Sigue disponible?`)}
+                href={whatsappLink(ag.whatsapp, `Hola, me interesa el ${titulo} (${formatKm(auto.km)}) que vi en la web. ¿Sigue disponible?`)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="btn-rojo w-full"
@@ -175,7 +176,7 @@ export default async function AutoPage({ params }: { params: Params }) {
                 <WhatsAppIcon className="size-5" /> Me interesa este auto
               </a>
               <a
-                href={whatsappLink(`Hola, quiero coordinar una visita y prueba de manejo del ${titulo}. ¿Qué días y horarios tienen?`)}
+                href={whatsappLink(ag.whatsapp, `Hola, quiero coordinar una visita y prueba de manejo del ${titulo}. ¿Qué días y horarios tienen?`)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="btn-borde w-full"
@@ -199,11 +200,11 @@ export default async function AutoPage({ params }: { params: Params }) {
           <div className="mt-4 rounded-lg bg-papel p-5">
             <p className="flex items-start gap-2 font-semibold">
               <Icon name="pin" className="mt-0.5 size-5 shrink-0 text-rojo" />
-              Este auto está en {site.ciudad}, {site.provincia}
+              Este auto está en {ag.ciudad}, {ag.provincia}
             </p>
-            <p className="mt-2 text-[15px] leading-relaxed text-stone-700">{site.traslado}</p>
+            <p className="mt-2 text-[15px] leading-relaxed text-stone-700">{ag.traslado}</p>
             <a
-              href={whatsappLink(`Hola, me interesa el ${titulo} pero no soy de ${site.ciudad}. Soy de ______. ¿Cómo podemos hacer con el traslado?`)}
+              href={whatsappLink(ag.whatsapp, `Hola, me interesa el ${titulo} pero no soy de ${ag.ciudad}. Soy de ______. ¿Cómo podemos hacer con el traslado?`)}
               target="_blank"
               rel="noopener noreferrer"
               className="btn-borde mt-4 w-full"

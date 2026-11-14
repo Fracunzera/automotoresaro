@@ -1,3 +1,4 @@
+import { requerirPagina } from "@/lib/usuarios";
 import { leerEnvios } from "@/app/admin/acciones-clientes";
 import { RedactarMail } from "@/components/admin/RedactarMail";
 import { getPublicos } from "@/lib/autos";
@@ -10,6 +11,7 @@ const fecha = (iso: string) =>
   new Date(iso).toLocaleString("es-AR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 
 export default async function MailsPage({ searchParams }: { searchParams: SP }) {
+  await requerirPagina("admin");
   const sp = await searchParams;
   const [clientes, autos, envios] = await Promise.all([leerClientes(), getPublicos(), leerEnvios()]);
   const clienteInicial = typeof sp.cliente === "string" ? sp.cliente : undefined;

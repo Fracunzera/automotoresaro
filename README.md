@@ -43,6 +43,12 @@ Pensado para usarse desde el celular, con letra y botones grandes.
 - **Consignación (autos de clientes):** en cada auto se cargan patente, DNI y domicilio del dueño, fecha de ingreso, plazo del acuerdo, exclusividad, cargo por retiro anticipado y papeles recibidos. Botón **Contrato** para imprimir el acuerdo ya completo y firmarlo (es un **modelo orientativo: revisarlo con un abogado** antes de usarlo; completar `legal.titular` y `legal.cuit` en `src/config/site.ts`). Si el dueño se lleva el auto, botón **El dueño lo retiró**: se elige qué pasó (lo retiró antes, lo vendió por su cuenta o terminó el plazo) y cuánto se le cobró; ese cobro se suma a la ganancia del mes. El Inicio avisa cuando un acuerdo está por vencer.
 - **Comisiones:** comisión por defecto para autos de clientes, con tres formas de cobrar (porcentaje del precio, monto fijo, o precio acordado para el dueño) y comisión mínima opcional. También se cambian la tasa, el anticipo y las cuotas del simulador de la página.
 
+- **Ajustes → Datos de la agencia:** nombre, WhatsApp (se escribe como sea, ej. "2966 15 123456", y se corrige solo), teléfono, email, dirección, horarios, link de Google Maps, redes, el aviso para compradores de otras ciudades y titular/CUIT para el contrato. Se actualiza al instante en la página, los mails y el contrato. Los valores de `src/config/site.ts` son solo los iniciales.
+- **Ajustes → Empleados:** dar de alta empleados con su usuario y contraseña, con dos roles:
+  - **Administrador:** todo.
+  - **Vendedor:** carga y edita autos, los reserva o los marca como vendidos, y atiende clientes. **No ve** costos, comisiones, ganancias, ajustes, empleados ni mails.
+
+  Se los puede dar de baja (no pueden entrar más y se les cierra la sesión al instante) o cambiarles la contraseña. Las contraseñas se guardan cifradas. En el Inicio se ve **quién vendió** cada auto y las ventas del mes por vendedor. Cada empleado puede cambiar su propia contraseña en **Mi contraseña**. La cuenta principal (`ADMIN_USER` / `ADMIN_PASSWORD`) se cambia en el servidor.
 - **Clientes:** lista de clientes registrados (con los autos que guardaron en favoritos y lo que compraron), buscador y botón de WhatsApp. Se pueden agregar a mano; al marcar un auto como vendido se pueden guardar los datos del comprador.
 - **Mails:** escribir un mail (con autos del stock incluidos), mandarse una prueba, y enviarlo a todos los clientes que aceptaron recibir novedades o a uno solo. Cada mail lleva un link para darse de baja.
 

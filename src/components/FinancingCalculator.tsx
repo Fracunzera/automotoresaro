@@ -1,5 +1,6 @@
 "use client";
 
+import { useAgencia } from "./AgenciaContext";
 import { useMemo, useState } from "react";
 import type { Financiacion } from "@/lib/negocio-tipos";
 import { cuotaMensual, formatNumero, whatsappLink } from "@/lib/utils";
@@ -15,6 +16,7 @@ type Props = {
 
 export function FinancingCalculator({ fin, precio: precioFijo, tituloAuto, variante = "panel" }: Props) {
   const { tna, anticipoMinimo, plazos } = fin;
+  const { whatsapp } = useAgencia();
   const [precio, setPrecio] = useState(precioFijo ?? 20000000);
   const minAnticipo = Math.round(precio * anticipoMinimo);
   const [anticipo, setAnticipo] = useState(Math.round((precioFijo ?? 20000000) * 0.4));
@@ -103,7 +105,7 @@ export function FinancingCalculator({ fin, precio: precioFijo, tituloAuto, varia
         <div className="flex justify-between"><dt className="text-stone-600">TNA de referencia</dt><dd className="font-semibold">{Math.round(tna * 100)}%</dd></div>
         <div className="flex justify-between"><dt className="text-stone-600">Total en cuotas</dt><dd className="font-semibold">${formatNumero(total)}</dd></div>
       </dl>
-      <a href={whatsappLink(mensaje)} target="_blank" rel="noopener noreferrer" className="btn-rojo mt-5 w-full">
+      <a href={whatsappLink(whatsapp, mensaje)} target="_blank" rel="noopener noreferrer" className="btn-rojo mt-5 w-full">
         Consultar esta financiación
       </a>
       <p className="mt-3 text-xs leading-snug text-stone-500">

@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { getAgencia } from "@/lib/agencia";
+import { linkMapa, telLink } from "@/lib/agencia-tipos";
 import { site } from "@/config/site";
 import { getPublicos } from "@/lib/autos";
 import { getFinanciacion } from "@/lib/negocio";
@@ -11,7 +13,7 @@ import { Icon } from "@/components/Icon";
 const tipos: Carroceria[] = ["SUV", "Pick-up", "Sedán", "Hatchback", "Utilitario"];
 
 export default async function Home() {
-  const [autos, fin] = await Promise.all([getPublicos(), getFinanciacion()]);
+  const [autos, fin, ag] = await Promise.all([getPublicos(), getFinanciacion(), getAgencia()]);
   const disponibles = autos.filter((a) => a.estado === "publicado");
   const recientes = [...disponibles].sort((a, b) => Number(!!b.destacado) - Number(!!a.destacado)).slice(0, 8);
   const marcas = Array.from(new Set(autos.map((a) => a.marca))).sort();
@@ -26,7 +28,7 @@ export default async function Home() {
       >
         {site.fotoPortada && <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/55 to-black/20" aria-hidden />}
         <div className="contenedor relative pb-14 pt-14 sm:pb-20 sm:pt-20">
-          <p className="sobretitulo">{site.nombre} · {site.ciudad}, {site.provincia}</p>
+          <p className="sobretitulo">{ag.nombre} · {ag.ciudad}, {ag.provincia}</p>
           <h1 className="titulo mt-3 max-w-3xl text-[44px] uppercase text-white sm:text-[68px]">
             Comprá, vendé o cambiá tu auto
           </h1>
@@ -157,14 +159,14 @@ export default async function Home() {
           <div>
             <h2 className="titulo text-[32px]">Vení a verlos</h2>
             <p className="mt-2 text-stone-700">
-              {site.direccion}, {site.ciudad} · {site.horarios}
+              {ag.direccion}, {ag.ciudad} · {ag.horarios}
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <a href={site.mapa} target="_blank" rel="noopener noreferrer" className="btn-tinta">
+            <a href={linkMapa(ag)} target="_blank" rel="noopener noreferrer" className="btn-tinta">
               <Icon name="pin" className="size-4" /> Cómo llegar
             </a>
-            <a href={`tel:${site.telefono.replace(/[^+\d]/g, "")}`} className="btn-borde">
+            <a href={telLink(ag.telefono)} className="btn-borde">
               <Icon name="phone" className="size-4" /> Llamar
             </a>
           </div>

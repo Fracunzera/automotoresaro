@@ -8,7 +8,7 @@ import { Confirmar } from "./Confirmar";
 
 type Datos = { email: string; nombre: string; telefono: string; ciudad: string; notas: string; aceptaMails: boolean };
 
-export function ClienteForm({ id, inicial, origenWeb }: { id?: string; inicial: Datos; origenWeb?: boolean }) {
+export function ClienteForm({ id, inicial, origenWeb, puedeBorrar }: { id?: string; inicial: Datos; origenWeb?: boolean; puedeBorrar?: boolean }) {
   const router = useRouter();
   const [d, setD] = useState(inicial);
   const [error, setError] = useState("");
@@ -54,7 +54,7 @@ export function ClienteForm({ id, inicial, origenWeb }: { id?: string; inicial: 
       />
       {error && <p role="alert" className="rounded-lg bg-rojo-claro p-4 text-lg font-semibold text-rojo-oscuro">{error}</p>}
       <button disabled={cargando} className="btn-g w-full bg-rojo text-white hover:bg-rojo-oscuro">{cargando ? "Guardando…" : "Guardar cliente"}</button>
-      {id && (
+      {id && puedeBorrar && (
         <button type="button" onClick={() => setBorrar(true)} className="btn-g w-full border-2 border-stone-300 bg-white text-rojo-oscuro hover:border-rojo">
           Borrar este cliente
         </button>

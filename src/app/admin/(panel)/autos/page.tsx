@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getTodos } from "@/lib/autos";
 import { leerNegocio } from "@/lib/negocio";
 import { leerClientes } from "@/lib/clientes";
+import { usuarioActual } from "@/lib/usuarios";
 import { MOTIVO_RETIRO_TEXTO, calcularGanancia, completarNegocio, diasParaVencer, paraElDueno } from "@/lib/negocio-tipos";
 import { ESTADOS, ESTADO_TEXTO, type Estado } from "@/lib/tipos";
 import { ListaAutos, type FilaAuto } from "@/components/admin/ListaAutos";
@@ -10,7 +11,10 @@ type SP = Promise<Record<string, string | string[] | undefined>>;
 
 export default async function MisAutos({ searchParams }: { searchParams: SP }) {
   const sp = await searchParams;
-  const [autos, negocio, clientes] = await Promise.all([getTodos(), leerNegocio(), leerClientes()]);
+  const [autos, negocioTodo, clientes, yo] = await Promise.all([getTodos(), leerNegocio(), leerClientes(), usuarioActual()]);
+  const esAdmin = yo?.rol === "admin";
+  // Los vendedores no reciben datos del negocio (costos, comisiones, dueños)
+  const negocio = esAdmin ? negocioTodo : { ...negocioTodo, autos: {} };
   const pedido = typeof sp.ver === "string" && (ESTADOS as readonly string[]).includes(sp.ver) ? (sp.ver as Estado) : null;
   const ok = typeof sp.ok === "string" ? sp.ok.slice(0, 300) : undefined;
 
@@ -76,7 +80,7 @@ export default async function MisAutos({ searchParams }: { searchParams: SP }) {
         ))}
       </nav>
 
-      <ListaAutos filas={filas} />
+      <ListaAutos filas={filas} esAdmin={esAdmin} />
 
       {filas.length === 0 && (
         <div className="tarjeta-g mt-4 p-8 text-center">

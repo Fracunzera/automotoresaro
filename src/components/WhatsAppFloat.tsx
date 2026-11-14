@@ -1,11 +1,12 @@
-import { site } from "@/config/site";
+import { getAgencia } from "@/lib/agencia";
 import { whatsappLink } from "@/lib/utils";
 import { WhatsAppIcon } from "./Icon";
 
-export function WhatsAppFloat() {
+export async function WhatsAppFloat() {
+  const ag = await getAgencia();
   return (
     <a
-      href={whatsappLink(`Hola ${site.nombre}, quería hacer una consulta.`)}
+      href={whatsappLink(ag.whatsapp, `Hola ${ag.nombre}, quería hacer una consulta.`)}
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Escribinos por WhatsApp"

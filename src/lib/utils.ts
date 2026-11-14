@@ -1,5 +1,3 @@
-import { site } from "@/config/site";
-
 const ars = new Intl.NumberFormat("es-AR", {
   style: "currency",
   currency: "ARS",
@@ -12,8 +10,8 @@ export const formatKm = (n: number) => `${num.format(n)} km`;
 export const formatNumero = (n: number) => num.format(Math.round(n));
 
 /** Link de WhatsApp con mensaje precargado. */
-export function whatsappLink(mensaje: string): string {
-  return `https://wa.me/${site.whatsapp}?text=${encodeURIComponent(mensaje)}`;
+export function whatsappLink(numero: string, mensaje: string): string {
+  return `https://wa.me/${numero}?text=${encodeURIComponent(mensaje)}`;
 }
 
 /**

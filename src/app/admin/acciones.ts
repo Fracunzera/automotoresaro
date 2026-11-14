@@ -7,7 +7,9 @@ import { usaNube } from "@/lib/almacen";
 import { borrarNegocioAuto, guardarAjustes, guardarNegocioAuto, registrarRetiro, registrarVenta } from "@/lib/negocio";
 import { PAPELES, type Ajustes, type ModoComision, type MotivoRetiro, type NegocioAuto } from "@/lib/negocio-tipos";
 import { emailValido, normalizarEmail, registrarCompra } from "@/lib/clientes";
-import { COOKIE_SESION, DURACION_SESION_SEG, crearToken, iguales, passwordConfigurada, tokenValido } from "@/lib/sesion";
+import { COOKIE_SESION, DURACION_SESION_SEG, crearToken, passwordConfigurada } from "@/lib/sesion";
+import { autenticar, requerirUsuario, type Usuario } from "@/lib/usuarios";
+import { getNegocioAuto } from "@/lib/negocio";
 import {
   CARROCERIAS, COMBUSTIBLES, ESTADOS, ESTADO_TEXTO, TRANSMISIONES,
   type DatosAuto, type Estado,
@@ -28,11 +30,10 @@ export async function ingresar(_prev: { error?: string } | undefined, form: Form
     return { error: "Demasiados intentos. Esperá 15 minutos y probá de nuevo." };
   }
 
-  const usuario = String(form.get("usuario") ?? "").trim().toLowerCase();
+  const usuario = String(form.get("usuario") ?? "");
   const pass = String(form.get("password") ?? "");
-  const usuarioOk = iguales(usuario, (process.env.ADMIN_USER || "admin").trim().toLowerCase());
-  const passOk = iguales(pass, process.env.ADMIN_PASSWORD!);
-  if (!usuarioOk || !passOk) {
+  const ok = await autenticar(usuario, pass);
+  if (!ok) {
     const actual = reg && Date.now() - reg.desde < 15 * 60_000 ? reg : { n: 0, desde: Date.now() };
     intentos.set(ip, { n: actual.n + 1, desde: actual.desde });
     await new Promise((r) => setTimeout(r, 800));
@@ -40,7 +41,7 @@ export async function ingresar(_prev: { error?: string } | undefined, form: Form
   }
 
   intentos.delete(ip);
-  (await cookies()).set(COOKIE_SESION, await crearToken(), {
+  (await cookies()).set(COOKIE_SESION, await crearToken(ok.usuario.id, ok.version), {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
@@ -56,11 +57,8 @@ export async function salir() {
   redirect("/ingresar?agencia=1");
 }
 
-async function verificarSesion() {
-  if (!(await tokenValido((await cookies()).get(COOKIE_SESION)?.value))) {
-    throw new Error("Tu sesión se cerró. Volvé a ingresar con la contraseña.");
-  }
-}
+/** Exige sesión; con "admin" exige además rol de administrador. */
+const verificarSesion = (rol?: "admin"): Promise<Usuario> => requerirUsuario(rol);
 
 /** Traduce errores técnicos a algo entendible. */
 function errorAmigable(e: unknown): string {
@@ -68,7 +66,7 @@ function errorAmigable(e: unknown): string {
     return "Falta activar el almacenamiento (Vercel Blob) en la cuenta de Vercel. Avisale a quien armó la página.";
   }
   const msg = e instanceof Error ? e.message : "";
-  if (msg.startsWith("Tu sesión") || msg.startsWith("No encontramos")) return msg;
+  if (msg.startsWith("Tu sesión") || msg.startsWith("No encontramos") || msg.startsWith("No tenés permiso")) return msg;
   console.error(e);
   return "No se pudo guardar. Revisá tu conexión a internet y probá de nuevo.";
 }
@@ -154,6 +152,10 @@ function validarNegocio(d: Record<string, unknown>): NegocioAuto {
   };
 }
 
+/** Al editar un auto no se pierden los datos de venta o retiro ya registrados. */
+const conservarVenta = (n: NegocioAuto | undefined) =>
+  n ? { precioVenta: n.precioVenta, fechaVenta: n.fechaVenta, vendidoPor: n.vendidoPor, retiro: n.retiro } : {};
+
 /* ───────────── Autos ───────────── */
 
 export async function guardarAuto(
@@ -163,18 +165,19 @@ export async function guardarAuto(
   publicar: boolean,
 ): Promise<Resultado> {
   try {
-    await verificarSesion();
+    const u = await verificarSesion();
     const v = validar(datos);
     if (typeof v === "string") return { ok: false, error: v };
-    const n = validarNegocio(negocio);
+    // Los vendedores no ven ni cambian los datos del negocio
+    const n = u.rol === "admin" ? validarNegocio(negocio) : null;
     const titulo = `${v.marca} ${v.modelo} ${v.anio}`;
     if (id) {
       const auto = await actualizarAuto(id, v);
-      await guardarNegocioAuto(auto.id, n);
+      if (n) await guardarNegocioAuto(auto.id, { ...n, ...conservarVenta(await getNegocioAuto(auto.id)) });
       return { ok: true, id: auto.id, mensaje: `Listo, se guardaron los cambios del ${titulo}.` };
     }
     const auto = await crearAuto(v, publicar ? "publicado" : "oculto");
-    await guardarNegocioAuto(auto.id, n);
+    if (n) await guardarNegocioAuto(auto.id, n);
     return {
       ok: true,
       id: auto.id,
@@ -189,13 +192,13 @@ export type Comprador = { nombre: string; email: string; telefono: string; acept
 
 export async function cambiarEstadoAuto(id: string, estado: Estado, precioVenta?: number, comprador?: Comprador): Promise<Resultado> {
   try {
-    await verificarSesion();
+    const u = await verificarSesion(estado === "retirado" ? "admin" : undefined);
     if (!ESTADOS.includes(estado)) return { ok: false, error: "Estado no válido." };
     if (estado === "vendido" && !(entero(precioVenta) > 0)) return { ok: false, error: "Escribí a cuánto lo vendiste." };
     const emailComprador = comprador ? normalizarEmail(texto(comprador.email, 120)) : "";
     if (emailComprador && !emailValido(emailComprador)) return { ok: false, error: "Revisá el email del comprador." };
     const auto = await cambiarEstado(id, estado);
-    await registrarVenta(id, estado === "vendido" ? entero(precioVenta) : null);
+    await registrarVenta(id, estado === "vendido" ? entero(precioVenta) : null, u.nombre);
     if (estado !== "retirado") await registrarRetiro(id, null);
     if (estado === "vendido" && comprador && emailComprador) {
       await registrarCompra(
@@ -223,7 +226,7 @@ const MOTIVOS: readonly MotivoRetiro[] = ["antes", "vendioAfuera", "vencio"];
 /** El dueño de un auto en consignación se lo llevó (lo retiró o lo vendió por su cuenta). */
 export async function retirarAuto(id: string, motivo: MotivoRetiro, cobrado: number): Promise<Resultado> {
   try {
-    await verificarSesion();
+    await verificarSesion("admin");
     if (!MOTIVOS.includes(motivo)) return { ok: false, error: "Elegí qué pasó con el auto." };
     const monto = pesos(cobrado);
     const auto = await cambiarEstado(id, "retirado");
@@ -241,7 +244,7 @@ export async function retirarAuto(id: string, motivo: MotivoRetiro, cobrado: num
 
 export async function borrarAutoAccion(id: string, titulo: string): Promise<Resultado> {
   try {
-    await verificarSesion();
+    await verificarSesion("admin");
     await borrarAuto(id);
     await borrarNegocioAuto(id);
     return { ok: true, mensaje: `Se borró el ${titulo}.` };
@@ -252,7 +255,7 @@ export async function borrarAutoAccion(id: string, titulo: string): Promise<Resu
 
 export async function borrarEjemplosAccion(): Promise<Resultado> {
   try {
-    await verificarSesion();
+    await verificarSesion("admin");
     const n = await borrarEjemplos();
     return { ok: true, mensaje: `Listo, se borraron ${n} autos de ejemplo.` };
   } catch (e) {
@@ -265,7 +268,7 @@ export async function borrarEjemplosAccion(): Promise<Resultado> {
 
 export async function guardarAjustesAccion(a: Record<string, unknown>): Promise<Resultado> {
   try {
-    await verificarSesion();
+    await verificarSesion("admin");
     const fin = (a.financiacion ?? {}) as Record<string, unknown>;
     const num = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? v : NaN);
     const modo = de(MODOS, a.comisionModo);

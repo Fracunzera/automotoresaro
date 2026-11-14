@@ -1,13 +1,12 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { TIPOS_FOTO, guardarFoto, usaNube } from "@/lib/almacen";
-import { COOKIE_SESION, tokenValido } from "@/lib/sesion";
+import { usuarioActual } from "@/lib/usuarios";
 
 const MAX_BYTES = 8 * 1024 * 1024;
 
 /** Sube una foto (el navegador ya la achica antes de mandarla). */
 export async function POST(req: Request) {
-  if (!(await tokenValido((await cookies()).get(COOKIE_SESION)?.value))) {
+  if (!(await usuarioActual())) {
     return NextResponse.json({ error: "Tu sesión se cerró. Volvé a ingresar." }, { status: 401 });
   }
   if (process.env.VERCEL && !usaNube()) {

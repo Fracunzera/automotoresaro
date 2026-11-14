@@ -1,24 +1,27 @@
 import type { Metadata } from "next";
-import { site } from "@/config/site";
+import { getAgencia } from "@/lib/agencia";
+import { linkMapa } from "@/lib/agencia-tipos";
 import { whatsappLink } from "@/lib/utils";
 import { Icon, WhatsAppIcon } from "@/components/Icon";
 
-export const metadata: Metadata = {
-  title: "La agencia",
-  description: `Conocé ${site.nombre}: dónde estamos, cómo trabajamos y respuestas a las preguntas más comunes.`,
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const ag = await getAgencia();
+  return { title: "La agencia", description: `Conocé ${ag.nombre}: dónde estamos, cómo trabajamos y respuestas a las preguntas más comunes.` };
+}
 
-const faq = [
+const preguntas = (ag: Awaited<ReturnType<typeof getAgencia>>) => [
   ["¿Los autos están revisados?", "Sí. Antes de publicar un auto revisamos mecánica, frenos, electricidad y carrocería, y verificamos que la documentación esté en regla."],
   ["¿Puedo entregar mi auto como parte de pago?", "Sí. Te lo cotizamos y el valor se descuenta del auto que elijas. Empezá desde Vender mi auto."],
   ["¿Cómo funciona la financiación?", "Pagás un anticipo y el resto en cuotas fijas. La aprobación y la tasa final dependen de la entidad financiera."],
   ["¿Quién hace la transferencia?", "La gestionamos nosotros en el Registro Automotor. Te avisamos qué papeles traer."],
   ["¿Puedo ver el auto y probarlo?", "Sí. Escribinos por WhatsApp y coordinamos día y horario para que lo veas y lo manejes."],
   ["¿Puedo reservar un auto?", "Sí, con una seña. Consultanos las condiciones por WhatsApp."],
-  [`No soy de ${site.ciudad}, ¿cómo hago?`, `Estamos en ${site.ciudad}, ${site.provincia}. ${site.traslado}`],
+  [`No soy de ${ag.ciudad}, ¿cómo hago?`, `Estamos en ${ag.ciudad}, ${ag.provincia}. ${ag.traslado}`],
 ];
 
-export default function NosotrosPage() {
+export default async function NosotrosPage() {
+  const ag = await getAgencia();
+  const faq = preguntas(ag);
   return (
     <div className="contenedor pt-10">
       <div className="grid gap-14 lg:grid-cols-2">
@@ -27,7 +30,7 @@ export default function NosotrosPage() {
           <h1 className="titulo mt-2 text-[44px] sm:text-[56px]">Atención de agencia de barrio, stock a un click</h1>
           {/* TODO: reemplazar por la historia real (desde qué año, quiénes atienden, etc.) */}
           <p className="mt-5 text-lg leading-relaxed text-stone-700">
-            En {site.nombre} nos dedicamos a la compraventa de autos usados. Conocemos cada auto que vendemos y te
+            En {ag.nombre} nos dedicamos a la compraventa de autos usados. Conocemos cada auto que vendemos y te
             acompañamos desde que lo elegís hasta que tenés la cédula a tu nombre.
           </p>
           <p className="mt-4 leading-relaxed text-stone-700">
@@ -37,13 +40,13 @@ export default function NosotrosPage() {
           <div className="mt-10 rounded-lg bg-papel p-6">
             <h2 className="titulo text-2xl">Dónde estamos</h2>
             <ul className="mt-4 space-y-3 text-[15px]">
-              <li className="flex gap-3"><Icon name="pin" className="size-5 shrink-0 text-stone-500" />{site.direccion}, {site.ciudad}</li>
-              <li className="flex gap-3"><Icon name="clock" className="size-5 shrink-0 text-stone-500" />{site.horarios}</li>
-              <li className="flex gap-3"><Icon name="phone" className="size-5 shrink-0 text-stone-500" />{site.telefono}</li>
+              <li className="flex gap-3"><Icon name="pin" className="size-5 shrink-0 text-stone-500" />{ag.direccion}, {ag.ciudad}</li>
+              <li className="flex gap-3"><Icon name="clock" className="size-5 shrink-0 text-stone-500" />{ag.horarios}</li>
+              <li className="flex gap-3"><Icon name="phone" className="size-5 shrink-0 text-stone-500" />{ag.telefono}</li>
             </ul>
             <div className="mt-6 flex flex-wrap gap-2">
-              <a href={site.mapa} target="_blank" rel="noopener noreferrer" className="btn-tinta"><Icon name="pin" className="size-4" /> Cómo llegar</a>
-              <a href={whatsappLink(`Hola ${site.nombre}, quería hacer una consulta.`)} target="_blank" rel="noopener noreferrer" className="btn-whatsapp">
+              <a href={linkMapa(ag)} target="_blank" rel="noopener noreferrer" className="btn-tinta"><Icon name="pin" className="size-4" /> Cómo llegar</a>
+              <a href={whatsappLink(ag.whatsapp, `Hola ${ag.nombre}, quería hacer una consulta.`)} target="_blank" rel="noopener noreferrer" className="btn-whatsapp">
                 <WhatsAppIcon className="size-4" /> WhatsApp
               </a>
             </div>

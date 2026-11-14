@@ -26,6 +26,10 @@ export async function leerNegocio(): Promise<DatosNegocio> {
   };
 }
 
+export async function getNegocioAuto(id: string): Promise<NegocioAuto | undefined> {
+  return (await leerNegocio()).autos[id];
+}
+
 /** Datos de financiación para la página pública (no incluye nada privado). */
 export const getFinanciacion = unstable_cache(
   async (): Promise<Financiacion> => {
@@ -50,7 +54,7 @@ export function guardarNegocioAuto(id: string, n: NegocioAuto) {
   });
 }
 
-export function registrarVenta(id: string, precioVenta: number | null) {
+export function registrarVenta(id: string, precioVenta: number | null, vendidoPor?: string) {
   return conCandado("negocio", async () => {
     const d = await leerNegocio();
     const actual = d.autos[id];
@@ -58,11 +62,13 @@ export function registrarVenta(id: string, precioVenta: number | null) {
       if (!actual?.fechaVenta) return;
       delete actual.precioVenta;
       delete actual.fechaVenta;
+      delete actual.vendidoPor;
     } else {
       d.autos[id] = {
         ...completarNegocio(actual, d.ajustes),
         precioVenta,
         fechaVenta: new Date().toISOString(),
+        vendidoPor,
       };
     }
     await guardar(d);

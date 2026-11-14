@@ -1,5 +1,6 @@
+import { requerirPagina } from "@/lib/usuarios";
 import { notFound } from "next/navigation";
-import { site } from "@/config/site";
+import { getAgencia } from "@/lib/agencia";
 import { getPorId } from "@/lib/autos";
 import { leerNegocio } from "@/lib/negocio";
 import { completarNegocio, fechaVencimiento, PAPELES } from "@/lib/negocio-tipos";
@@ -17,8 +18,9 @@ const blanco = (v: string, largo = 24) => (v ? v : "_".repeat(largo));
  * MODELO ORIENTATIVO: revisarlo con un abogado antes de usarlo.
  */
 export default async function Contrato({ params }: { params: Promise<{ id: string }> }) {
+  await requerirPagina("admin");
   const { id } = await params;
-  const [auto, negocio] = await Promise.all([getPorId(id), leerNegocio()]);
+  const [auto, negocio, ag] = await Promise.all([getPorId(id), leerNegocio(), getAgencia()]);
   if (!auto) notFound();
   const n = completarNegocio(negocio.autos[id], negocio.ajustes);
   if (!n.fechaIngreso) n.fechaIngreso = auto.creado.slice(0, 10);
@@ -61,11 +63,11 @@ export default async function Contrato({ params }: { params: Promise<{ id: strin
         <h1 className="text-center text-xl font-bold uppercase tracking-wide">Contrato de consignación de automotor</h1>
 
         <p className="mt-6">
-          En la ciudad de {site.ciudad}, provincia de {site.provincia}, a los {ingreso.getDate()} días del mes de{" "}
+          En la ciudad de {ag.ciudad}, provincia de {ag.provincia}, a los {ingreso.getDate()} días del mes de{" "}
           {ingreso.toLocaleDateString("es-AR", { month: "long" })} de {ingreso.getFullYear()}, entre{" "}
           <b>{blanco(n.duenoNombre, 30)}</b>, DNI {blanco(n.duenoDni, 12)}, con domicilio en {blanco(n.duenoDomicilio, 34)}, teléfono{" "}
-          {blanco(n.duenoTelefono, 14)}, en adelante <b>EL CONSIGNANTE</b>; y <b>{blanco(site.legal.titular, 30)}</b>, CUIT{" "}
-          {blanco(site.legal.cuit, 14)}, en su carácter de titular de <b>{site.nombre}</b>, con domicilio en {site.direccion}, {site.ciudad},
+          {blanco(n.duenoTelefono, 14)}, en adelante <b>EL CONSIGNANTE</b>; y <b>{blanco(ag.legal.titular, 30)}</b>, CUIT{" "}
+          {blanco(ag.legal.cuit, 14)}, en su carácter de titular de <b>{ag.nombre}</b>, con domicilio en {ag.direccion}, {ag.ciudad},
           en adelante <b>LA AGENCIA</b>, acuerdan lo siguiente:
         </p>
 
@@ -110,7 +112,7 @@ export default async function Contrato({ params }: { params: Promise<{ id: strin
           venta. Los impuestos y multas devengados hasta la fecha de venta son a cargo del CONSIGNANTE.
         </>)}
         {c("Jurisdicción", <>
-          Para cualquier diferencia, las partes se someten a los tribunales ordinarios de la ciudad de {site.ciudad}, {site.provincia}.
+          Para cualquier diferencia, las partes se someten a los tribunales ordinarios de la ciudad de {ag.ciudad}, {ag.provincia}.
         </>)}
 
         <p className="mt-4">En prueba de conformidad, se firman dos ejemplares de un mismo tenor y a un solo efecto.</p>
@@ -120,7 +122,7 @@ export default async function Contrato({ params }: { params: Promise<{ id: strin
             Firma EL CONSIGNANTE<br />Aclaración: {n.duenoNombre || ""}<br />DNI: {n.duenoDni || ""}
           </div>
           <div className="border-t border-black pt-2">
-            Firma LA AGENCIA<br />{site.legal.titular || site.nombre}
+            Firma LA AGENCIA<br />{ag.legal.titular || ag.nombre}
           </div>
         </div>
       </article>

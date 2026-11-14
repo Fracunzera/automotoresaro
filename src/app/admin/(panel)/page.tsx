@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getTodos } from "@/lib/autos";
 import { leerNegocio } from "@/lib/negocio";
 import { leerClientes } from "@/lib/clientes";
+import { usuarioActual } from "@/lib/usuarios";
 import { MODO_COMISION_TEXTO, calcularGanancia, completarNegocio, diasParaVencer } from "@/lib/negocio-tipos";
 import { formatNumero } from "@/lib/utils";
 import { BotonBorrarEjemplos } from "@/components/admin/BotonBorrarEjemplos";
@@ -19,8 +20,11 @@ function Dato({ titulo, valor, detalle }: { titulo: string; valor: string; detal
   );
 }
 
-export default async function Tablero() {
-  const [autos, negocio, clientes] = await Promise.all([getTodos(), leerNegocio(), leerClientes()]);
+type SP = Promise<Record<string, string | string[] | undefined>>;
+
+export default async function Tablero({ searchParams }: { searchParams: SP }) {
+  const [autos, negocio, clientes, yo, sp] = await Promise.all([getTodos(), leerNegocio(), leerClientes(), usuarioActual(), searchParams]);
+  const esAdmin = yo?.rol === "admin";
   const { ajustes } = negocio;
   const n = (id: string) => negocio.autos[id];
 
@@ -46,7 +50,7 @@ export default async function Tablero() {
     .map((a) => {
       const neg = n(a.id)!;
       const precio = neg.precioVenta ?? a.precio;
-      return { auto: a, precio, fecha: new Date(neg.fechaVenta!), ganancia: calcularGanancia(neg, precio, ajustes.comisionMinima) };
+      return { auto: a, precio, fecha: new Date(neg.fechaVenta!), vendidoPor: neg.vendidoPor, ganancia: calcularGanancia(neg, precio, ajustes.comisionMinima) };
     })
     .sort((x, y) => +y.fecha - +x.fecha);
   const delMes = (offset: number) => {
@@ -55,6 +59,13 @@ export default async function Tablero() {
   };
   const esteMes = delMes(0);
   const mesPasado = delMes(1);
+  const porVendedor = Object.entries(
+    esteMes.reduce<Record<string, number>>((acc, v) => {
+      const k = v.vendidoPor || "Sin registrar";
+      acc[k] = (acc[k] ?? 0) + 1;
+      return acc;
+    }, {}),
+  ).sort((a, b) => b[1] - a[1]);
   const retirosMes = autos.filter((a) => {
     const r = a.estado === "retirado" ? n(a.id)?.retiro : undefined;
     if (!r) return false;
@@ -90,7 +101,7 @@ export default async function Tablero() {
         <p className="mt-1 text-lg text-stone-600">Así está la agencia hoy, {hoy.getDate()} de {MESES[hoy.getMonth()]}.</p>
       </div>
 
-      {hayEjemplos && (
+      {esAdmin && hayEjemplos && (
         <div className="rounded-lg border-2 border-[#e6c35c] bg-[#fff8e1] p-5">
           <p className="text-lg font-bold">La página todavía muestra autos de ejemplo</p>
           <p className="mt-1 text-lg text-stone-700">
@@ -100,14 +111,28 @@ export default async function Tablero() {
         </div>
       )}
 
+      {sp.sinPermiso && (
+        <p role="alert" className="rounded-lg border-2 border-rojo bg-rojo-claro p-4 text-lg font-semibold text-rojo-oscuro">
+          Esa sección es solo para administradores.
+        </p>
+      )}
+
       {/* Accesos directos */}
       <section>
         <h2 className="text-xl font-bold">¿Qué querés hacer?</h2>
         <div className="mt-3 grid gap-3 sm:grid-cols-2">
           <Link href="/admin/autos/nuevo" className="btn-g justify-start bg-rojo text-white hover:bg-rojo-oscuro">+ Cargar un auto nuevo</Link>
           <Link href="/admin/autos" className="btn-g justify-start border-2 border-tinta bg-white hover:bg-papel">Ver y cambiar mis autos</Link>
-          <Link href="/admin/ajustes#comisiones" className="btn-g justify-start border-2 border-tinta bg-white hover:bg-papel">Cambiar comisiones</Link>
-          <Link href="/admin/ajustes#financiacion" className="btn-g justify-start border-2 border-tinta bg-white hover:bg-papel">Cambiar tasa y cuotas</Link>
+          {esAdmin ? (
+            <>
+              <Link href="/admin/ajustes#comisiones" className="btn-g justify-start border-2 border-tinta bg-white hover:bg-papel">Cambiar comisiones</Link>
+              <Link href="/admin/agencia" className="btn-g justify-start border-2 border-tinta bg-white hover:bg-papel">Cambiar datos de la agencia</Link>
+              <Link href="/admin/empleados" className="btn-g justify-start border-2 border-tinta bg-white hover:bg-papel">Empleados</Link>
+              <Link href="/admin/ajustes#financiacion" className="btn-g justify-start border-2 border-tinta bg-white hover:bg-papel">Cambiar tasa y cuotas</Link>
+            </>
+          ) : (
+            <Link href="/admin/clientes" className="btn-g justify-start border-2 border-tinta bg-white hover:bg-papel">Ver clientes</Link>
+          )}
         </div>
       </section>
 
@@ -119,14 +144,14 @@ export default async function Tablero() {
           <Dato titulo="Reservados" valor={String(reservados.length)} />
           <div className="col-span-2 sm:col-span-1"><Dato titulo="De clientes (consignación)" valor={String(deClientes)} detalle={`de ${stock.length} en total`} /></div>
         </div>
-        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+        {esAdmin && <div className="mt-3 grid gap-3 sm:grid-cols-2">
           <Dato titulo="Valor de todo el stock" valor={pesos(valorStock)} detalle="Suma de los precios publicados" />
           <Dato
             titulo="Ganancia si se vende todo"
             valor={pesos(gananciaStock)}
             detalle={sinDatos.length ? `Faltan datos de ${sinDatos.length} auto${sinDatos.length > 1 ? "s" : ""} (ver abajo)` : "Con los precios actuales"}
           />
-        </div>
+        </div>}
       </section>
 
       {/* Ventas */}
@@ -134,9 +159,20 @@ export default async function Tablero() {
         <h2 className="text-xl font-bold">Ventas de {MESES[hoy.getMonth()]}</h2>
         <div className="mt-3 grid gap-3 sm:grid-cols-3">
           <Dato titulo="Autos vendidos" valor={String(esteMes.length)} detalle={`El mes pasado: ${mesPasado.length}`} />
-          <Dato titulo="Total vendido" valor={pesos(facturadoMes)} />
-          <Dato titulo="Ganancia del mes" valor={pesos(gananciaMes)} detalle={cobradoRetiros > 0 ? `Incluye ${pesos(cobradoRetiros)} cobrados por retiros` : undefined} />
+          {esAdmin && <Dato titulo="Total vendido" valor={pesos(facturadoMes)} />}
+          {esAdmin && <Dato titulo="Ganancia del mes" valor={pesos(gananciaMes)} detalle={cobradoRetiros > 0 ? `Incluye ${pesos(cobradoRetiros)} cobrados por retiros` : undefined} />}
         </div>
+        {esAdmin && porVendedor.length > 1 && (
+          <div className="tarjeta-g mt-3 divide-y-2 divide-linea">
+            <p className="px-5 py-3 text-base font-semibold text-stone-600">Ventas del mes por vendedor</p>
+            {porVendedor.map(([quien, cant]) => (
+              <div key={quien} className="flex justify-between px-5 py-3 text-lg">
+                <span className="font-semibold">{quien}</span>
+                <span>{cant} {cant === 1 ? "auto" : "autos"}</span>
+              </div>
+            ))}
+          </div>
+        )}
         {vendidos.length > 0 ? (
           <div className="tarjeta-g mt-3 divide-y-2 divide-linea">
             <p className="px-5 py-3 text-base font-semibold text-stone-600">Últimas ventas</p>
@@ -144,15 +180,17 @@ export default async function Tablero() {
               <div key={v.auto.id} className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 px-5 py-3 text-lg">
                 <span className="font-semibold">{v.auto.marca} {v.auto.modelo} {v.auto.anio}</span>
                 <span className="text-stone-600">
-                  {v.fecha.getDate()}/{v.fecha.getMonth() + 1} · {pesos(v.precio)}
-                  {v.ganancia !== null && <> · ganancia <b className="text-tinta">{pesos(v.ganancia)}</b></>}
+                  {v.fecha.getDate()}/{v.fecha.getMonth() + 1}
+                  {v.vendidoPor && <> · vendió {v.vendidoPor.split(" ")[0]}</>}
+                  {esAdmin && <> · {pesos(v.precio)}</>}
+                  {esAdmin && v.ganancia !== null && <> · ganancia <b className="text-tinta">{pesos(v.ganancia)}</b></>}
                 </span>
               </div>
             ))}
           </div>
         ) : (
           <p className="mt-3 text-lg text-stone-600">
-            Cuando vendas un auto, tocá <b>“Lo vendí”</b> en Mis autos y acá vas a ver las ventas y la ganancia.
+            Cuando vendas un auto, tocá <b>“Lo vendí”</b> en Mis autos y acá vas a ver las ventas{esAdmin ? " y la ganancia" : ""}.
           </p>
         )}
       </section>
@@ -187,12 +225,12 @@ export default async function Tablero() {
         })()}
         <div className="mt-3 flex flex-wrap gap-2">
           <Link href="/admin/clientes" className="btn-g border-2 border-tinta bg-white hover:bg-papel">Ver clientes</Link>
-          <Link href="/admin/mails" className="btn-g border-2 border-tinta bg-white hover:bg-papel">Mandar un mail</Link>
+          {esAdmin && <Link href="/admin/mails" className="btn-g border-2 border-tinta bg-white hover:bg-papel">Mandar un mail</Link>}
         </div>
       </section>
 
       {/* Avisos */}
-      {(porVencer.length > 0 || viejos.length > 0 || sinFotos.length > 0 || sinDatos.filter((a) => !a.ejemplo).length > 0) && (
+      {(porVencer.length > 0 || viejos.length > 0 || sinFotos.length > 0 || (esAdmin && sinDatos.filter((a) => !a.ejemplo).length > 0)) && (
         <section>
           <h2 className="text-xl font-bold">Para revisar</h2>
           <div className="mt-3 space-y-3">
@@ -220,7 +258,7 @@ export default async function Tablero() {
                 autos={sinFotos.map((a) => ({ id: a.id, texto: `${a.marca} ${a.modelo} ${a.anio}` }))}
               />
             )}
-            {sinDatos.filter((a) => !a.ejemplo).length > 0 && (
+            {esAdmin && sinDatos.filter((a) => !a.ejemplo).length > 0 && (
               <Aviso
                 titulo="Autos sin datos de compra o comisión"
                 texto="Cargá cuánto pagaste (o la comisión, si es de un cliente) para calcular la ganancia."
@@ -232,7 +270,7 @@ export default async function Tablero() {
       )}
 
       {/* Ajustes actuales */}
-      <section className="tarjeta-g p-5">
+      {esAdmin && <section className="tarjeta-g p-5">
         <h2 className="text-xl font-bold">Cómo estás cobrando hoy</h2>
         <dl className="mt-3 space-y-2 text-lg">
           <div>
@@ -249,7 +287,7 @@ export default async function Tablero() {
         </dl>
         <p className="mt-1 text-base text-stone-500">Modo de comisión: {MODO_COMISION_TEXTO[ajustes.comisionModo]}</p>
         <Link href="/admin/ajustes" className="btn-g mt-4 border-2 border-tinta bg-white hover:bg-papel">Cambiar</Link>
-      </section>
+      </section>}
     </div>
   );
 }

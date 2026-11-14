@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { site } from "@/config/site";
+import { linkMapa, telLink } from "@/lib/agencia-tipos";
+import { useAgencia } from "./AgenciaContext";
 import { whatsappLink } from "@/lib/utils";
 import { Icon, WhatsAppIcon } from "./Icon";
 import { useCliente } from "./cuenta/ClienteContext";
@@ -16,11 +17,13 @@ const nav = [
 ];
 
 export function Logo({ claro = false }: { claro?: boolean }) {
+  const palabras = useAgencia().nombre.trim().split(/\s+/);
+  const ultima = palabras.pop();
   return (
     <span className={`flex items-baseline gap-1.5 font-display text-[21px] font-extrabold sm:text-[25px] uppercase leading-none tracking-tight ${claro ? "text-white" : "text-tinta"}`}>
-      Automotores
+      {palabras.join(" ")}
       <span className="relative text-rojo">
-        Aro
+        {ultima}
         <span className="absolute -bottom-1 left-0 h-[3px] w-full bg-rojo" aria-hidden />
       </span>
     </span>
@@ -30,6 +33,7 @@ export function Logo({ claro = false }: { claro?: boolean }) {
 export function Header() {
   const [abierto, setAbierto] = useState(false);
   const pathname = usePathname();
+  const ag = useAgencia();
   const { cliente, admin, cargado, favoritos } = useCliente();
   useEffect(() => setAbierto(false), [pathname]);
 
@@ -39,20 +43,20 @@ export function Header() {
       <div className="hidden bg-tinta text-[13px] text-stone-300 md:block">
         <div className="contenedor flex h-9 items-center justify-between">
           <div className="flex items-center gap-5">
-            <a href={site.mapa} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 hover:text-white">
-              <Icon name="pin" className="size-4" /> {site.direccion}, {site.ciudad}
+            <a href={linkMapa(ag)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 hover:text-white">
+              <Icon name="pin" className="size-4" /> {ag.direccion}, {ag.ciudad}
             </a>
-            <span className="flex items-center gap-1.5"><Icon name="clock" className="size-4" /> {site.horarios}</span>
+            <span className="flex items-center gap-1.5"><Icon name="clock" className="size-4" /> {ag.horarios}</span>
           </div>
-          <a href={`tel:${site.telefono.replace(/[^+\d]/g, "")}`} className="flex items-center gap-1.5 hover:text-white">
-            <Icon name="phone" className="size-4" /> {site.telefono}
+          <a href={telLink(ag.telefono)} className="flex items-center gap-1.5 hover:text-white">
+            <Icon name="phone" className="size-4" /> {ag.telefono}
           </a>
         </div>
       </div>
 
       <div className="border-b border-linea">
         <div className="contenedor flex h-16 items-center justify-between gap-6">
-          <Link href="/" aria-label={`${site.nombre}, inicio`}>
+          <Link href="/" aria-label={`${ag.nombre}, inicio`}>
             <Logo />
           </Link>
 
@@ -88,7 +92,7 @@ export function Header() {
               )}
             </Link>
             <a
-              href={whatsappLink(`Hola ${site.nombre}, quería hacer una consulta.`)}
+              href={whatsappLink(ag.whatsapp, `Hola ${ag.nombre}, quería hacer una consulta.`)}
               target="_blank"
               rel="noopener noreferrer"
               className="btn-whatsapp h-10! px-4! max-sm:hidden"
@@ -122,9 +126,9 @@ export function Header() {
               <Link href="/admin" className="border-b border-linea py-3.5 font-display text-xl font-bold uppercase text-rojo">Panel de la agencia</Link>
             )}
             <div className="space-y-1 py-4 text-sm text-stone-600">
-              <p>{site.direccion}, {site.ciudad}</p>
-              <p>{site.horarios}</p>
-              <a href={`tel:${site.telefono.replace(/[^+\d]/g, "")}`} className="font-semibold text-tinta">{site.telefono}</a>
+              <p>{ag.direccion}, {ag.ciudad}</p>
+              <p>{ag.horarios}</p>
+              <a href={telLink(ag.telefono)} className="font-semibold text-tinta">{ag.telefono}</a>
             </div>
           </div>
         </nav>
