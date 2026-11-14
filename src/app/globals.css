@@ -1,50 +1,68 @@
 @import "tailwindcss";
 
 @theme {
-  --color-marca-50: #eef4ff;
-  --color-marca-100: #dbe6fe;
-  --color-marca-500: #2f5bea;
-  --color-marca-600: #1f45c9;
-  --color-marca-700: #1a37a0;
-  --color-marca-900: #0d1b4d;
-  --color-marca-950: #081131;
-  --color-acento-400: #ffb547;
-  --color-acento-500: #ff9a1f;
-  --color-acento-600: #e57f00;
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
-}
+  /* Identidad: negro tinta + rojo señal sobre blanco y gris cálido */
+  --color-tinta: #15171a;
+  --color-tinta-2: #2b2e34;
+  --color-rojo: #d12b1f;
+  --color-rojo-oscuro: #ac2218;
+  --color-rojo-claro: #fcebe9;
+  --color-papel: #f3f2ef;
+  --color-linea: #e3e1dc;
 
-html {
-  scroll-behavior: smooth;
+  --font-sans: var(--font-barlow), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-barlow-condensed), var(--font-barlow), sans-serif;
+
+  --radius-sm: 3px;
+  --radius-md: 5px;
+  --radius-lg: 8px;
 }
 
 body {
-  background: #f7f8fb;
-  color: #0f172a;
+  background: #fff;
+  color: var(--color-tinta);
+  font-feature-settings: "tnum" 0;
+}
+
+::selection {
+  background: var(--color-rojo);
+  color: #fff;
+}
+
+@utility contenedor {
+  @apply mx-auto w-full max-w-[1240px] px-4 sm:px-6;
 }
 
 @utility btn {
-  @apply inline-flex items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-semibold transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marca-500 disabled:opacity-50;
+  @apply inline-flex h-11 items-center justify-center gap-2 rounded-md px-5 text-[15px] font-semibold whitespace-nowrap transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rojo disabled:opacity-50;
 }
-@utility btn-primario {
-  @apply btn bg-marca-600 text-white hover:bg-marca-700;
+@utility btn-rojo {
+  @apply btn bg-rojo text-white hover:bg-rojo-oscuro;
 }
-@utility btn-acento {
-  @apply btn bg-acento-500 text-marca-950 hover:bg-acento-400;
+@utility btn-tinta {
+  @apply btn bg-tinta text-white hover:bg-tinta-2;
 }
-@utility btn-secundario {
-  @apply btn border border-slate-300 bg-white text-slate-900 hover:border-slate-400 hover:bg-slate-50;
+@utility btn-borde {
+  @apply btn border border-stone-300 bg-white text-tinta hover:border-tinta;
 }
 @utility btn-whatsapp {
-  @apply btn bg-[#25d366] text-white hover:bg-[#1ebe5b];
+  @apply btn bg-[#1faa53] text-white hover:bg-[#188f45];
 }
 
 @utility campo {
-  @apply w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-marca-500 focus:ring-2 focus:ring-marca-100;
+  @apply h-11 w-full rounded-md border border-stone-300 bg-white px-3 text-[15px] text-tinta outline-none transition-colors placeholder:text-stone-400 focus:border-tinta;
 }
 @utility etiqueta {
-  @apply mb-1 block text-xs font-semibold tracking-wide text-slate-600 uppercase;
+  @apply mb-1.5 block text-sm font-semibold text-stone-700;
 }
-@utility contenedor {
-  @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
+@utility sobretitulo {
+  @apply font-display text-sm font-semibold tracking-[0.12em] text-rojo uppercase;
+}
+@utility titulo {
+  @apply font-display font-bold leading-[1.05] tracking-tight text-tinta;
+}
+
+/* Ocultar el marcador por defecto de <details> */
+summary::-webkit-details-marker {
+  display: none;
 }

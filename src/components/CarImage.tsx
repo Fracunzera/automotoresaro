@@ -1,59 +1,78 @@
 import Image from "next/image";
-import type { Auto } from "@/data/autos";
+import type { Auto, Carroceria } from "@/data/autos";
 
-/** Silueta según carrocería para cuando el auto todavía no tiene fotos. */
-const siluetas: Record<Auto["carroceria"], string> = {
-  Sedán: "M20 70 L40 50 Q50 40 70 38 L130 36 Q150 36 165 48 L185 60 Q200 62 205 70 L205 82 L20 82 Z",
-  Hatchback: "M22 70 L45 46 Q55 38 75 37 L140 36 Q155 37 168 50 L182 66 Q196 68 200 74 L200 82 L22 82 Z",
-  SUV: "M20 66 L38 40 Q46 30 66 30 L150 30 Q165 30 175 44 L188 60 Q202 62 206 70 L206 84 L20 84 Z",
-  "Pick-up": "M15 64 L35 40 Q42 32 58 32 L110 32 L112 56 L205 56 L208 84 L15 84 Z",
-  Utilitario: "M20 70 L32 36 Q36 28 50 28 L175 28 Q190 28 195 40 L205 70 L205 84 L20 84 Z",
-  Coupé: "M18 72 L50 50 Q65 40 90 40 L125 40 Q150 42 170 56 L190 64 Q204 66 206 74 L206 82 L18 82 Z",
+/** Perfil lateral de cada tipo de carrocería (viewBox 0 0 225 100). */
+export const siluetas: Record<Carroceria, string> = {
+  Sedán: "M14 74 Q14 66 22 64 L52 58 L78 42 Q86 38 98 38 L138 38 Q150 38 160 46 L176 58 L200 62 Q210 64 211 72 L211 80 L14 80 Z",
+  Hatchback: "M16 74 Q16 66 24 64 L50 58 L76 40 Q84 36 96 36 L150 36 Q160 36 166 44 L180 62 Q200 64 204 72 L204 80 L16 80 Z",
+  SUV: "M14 72 Q14 62 24 60 L44 56 L66 34 Q72 28 84 28 L164 28 Q176 28 182 38 L192 56 Q208 58 210 68 L210 80 L14 80 Z",
+  "Pick-up": "M10 72 Q10 62 20 60 L40 56 L60 34 Q66 30 78 30 L118 30 L120 54 L208 54 Q214 54 214 62 L214 80 L10 80 Z",
+  Utilitario: "M14 72 Q14 62 22 60 L36 56 L52 32 Q56 26 66 26 L196 26 Q206 26 206 36 L208 80 L14 80 Z",
+  Coupé: "M12 74 Q12 66 20 64 L60 56 L88 42 Q96 39 108 39 L134 39 Q150 40 166 52 L196 62 Q210 64 211 72 L211 80 L12 80 Z",
 };
+
+/** Ícono de línea por carrocería, para los accesos rápidos. */
+export function TipoIcono({ tipo, className = "" }: { tipo: Carroceria; className?: string }) {
+  return (
+    <svg viewBox="0 0 225 100" className={className} aria-hidden="true">
+      <path d={siluetas[tipo]} fill="none" stroke="currentColor" strokeWidth="5" strokeLinejoin="round" />
+      <circle cx="58" cy="80" r="13" fill="#fff" stroke="currentColor" strokeWidth="5" />
+      <circle cx="168" cy="80" r="13" fill="#fff" stroke="currentColor" strokeWidth="5" />
+    </svg>
+  );
+}
 
 export function CarImage({
   auto,
   index = 0,
   className = "",
   priority = false,
+  sizes = "(max-width: 768px) 100vw, 33vw",
 }: {
   auto: Auto;
   index?: number;
   className?: string;
   priority?: boolean;
+  sizes?: string;
 }) {
   const foto = auto.fotos[index];
   if (foto) {
     return (
-      <div className={`relative overflow-hidden bg-slate-200 ${className}`}>
-        <Image
-          src={foto}
-          alt={`${auto.marca} ${auto.modelo} ${auto.anio}`}
-          fill
-          priority={priority}
-          sizes="(max-width: 768px) 100vw, 50vw"
-          className="object-cover"
-        />
+      <div className={`relative overflow-hidden bg-stone-200 ${className}`}>
+        <Image src={foto} alt={`${auto.marca} ${auto.modelo} ${auto.anio}`} fill priority={priority} sizes={sizes} className="object-cover" />
       </div>
     );
   }
 
+  // Sin fotos: "estudio" neutro con el perfil del auto en su color.
   return (
     <div
-      className={`relative flex items-center justify-center overflow-hidden bg-gradient-to-br from-slate-100 to-slate-300 ${className}`}
+      className={`relative overflow-hidden ${className}`}
+      style={{ background: "linear-gradient(180deg,#e9e8e4 0%,#e9e8e4 64%,#d9d7d1 64%,#cfccc5 100%)" }}
       role="img"
-      aria-label={`${auto.marca} ${auto.modelo} ${auto.anio} (foto próximamente)`}
+      aria-label={`${auto.marca} ${auto.modelo} ${auto.anio}. Fotos en preparación.`}
     >
-      <svg viewBox="0 0 225 100" className="w-4/5 drop-shadow-md">
-        <ellipse cx="112" cy="90" rx="100" ry="6" fill="#0f172a" opacity="0.15" />
-        <path d={siluetas[auto.carroceria]} fill={auto.colorHex} stroke="#0f172a" strokeOpacity="0.35" strokeWidth="1.5" />
-        <circle cx="60" cy="84" r="13" fill="#1f2937" />
-        <circle cx="60" cy="84" r="6" fill="#9ca3af" />
-        <circle cx="168" cy="84" r="13" fill="#1f2937" />
-        <circle cx="168" cy="84" r="6" fill="#9ca3af" />
+      <svg viewBox="0 0 225 100" className="absolute inset-x-[10%] bottom-[18%] w-[80%]">
+        <ellipse cx="112" cy="91" rx="104" ry="5" fill="#000" opacity="0.18" />
+        <path d={siluetas[auto.carroceria]} fill={auto.colorHex} stroke="#000" strokeOpacity="0.25" strokeWidth="1" />
+        <path d={siluetas[auto.carroceria]} fill="url(#brillo)" />
+        {[58, 168].map((x) => (
+          <g key={x}>
+            <circle cx={x} cy="80" r="13" fill="#1c1c1c" />
+            <circle cx={x} cy="80" r="7.5" fill="#8a8a8a" />
+            <circle cx={x} cy="80" r="2.5" fill="#3a3a3a" />
+          </g>
+        ))}
+        <defs>
+          <linearGradient id="brillo" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stopColor="#fff" stopOpacity="0.35" />
+            <stop offset="0.55" stopColor="#fff" stopOpacity="0" />
+            <stop offset="1" stopColor="#000" stopOpacity="0.15" />
+          </linearGradient>
+        </defs>
       </svg>
-      <span className="absolute bottom-2 right-3 text-[10px] font-medium tracking-wide text-slate-500 uppercase">
-        Fotos próximamente
+      <span className="absolute left-3 top-3 font-display text-[11px] font-semibold tracking-[0.14em] text-stone-500 uppercase">
+        Fotos en preparación
       </span>
     </div>
   );

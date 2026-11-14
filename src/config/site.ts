@@ -5,7 +5,7 @@
  */
 export const site = {
   nombre: "Automotores Aro",
-  eslogan: "Autos usados revisados, con financiación y tomamos tu usado.",
+  eslogan: "Autos usados revisados, financiación y tomamos tu usado.",
   descripcion:
     "Comprá o vendé tu auto usado con confianza. Unidades revisadas, financiación a tu medida y tasación de tu usado en el día.",
 
@@ -14,7 +14,13 @@ export const site = {
   whatsapp: "5491100000000", // TODO: reemplazar por el número real
   telefono: "+54 9 11 0000-0000", // TODO
   email: "ventas@automotoresaro.com.ar", // TODO
-  direccion: "Av. Siempreviva 742, Buenos Aires", // TODO
+  direccion: "Av. Siempreviva 742", // TODO
+  ciudad: "Buenos Aires", // TODO
+  // Link a Google Maps (buscá la agencia en Maps > Compartir > Copiar link)
+  mapa: "https://maps.google.com/?q=Av.+Siempreviva+742+Buenos+Aires", // TODO
+  // Foto de portada (opcional). Poné una foto de la agencia o del playón en /public/portada.jpg
+  // y escribí acá "/portada.jpg". Vacío = fondo negro.
+  fotoPortada: "" as string,
   horarios: "Lunes a viernes 9 a 19 h · Sábados 9 a 13 h",
   instagram: "https://instagram.com/", // TODO
 

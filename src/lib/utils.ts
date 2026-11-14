@@ -9,6 +9,7 @@ const num = new Intl.NumberFormat("es-AR");
 
 export const formatPrecio = (n: number) => ars.format(n);
 export const formatKm = (n: number) => `${num.format(n)} km`;
+export const formatNumero = (n: number) => num.format(Math.round(n));
 
 /** Link de WhatsApp con mensaje precargado. */
 export function whatsappLink(mensaje: string): string {

@@ -6,6 +6,8 @@ cotización de tu usado y contacto directo por WhatsApp.
 
 Hecho con **Next.js 15 + React 19 + Tailwind CSS 4**. No necesita base de datos para arrancar.
 
+Tipografía: **Barlow** y **Barlow Condensed** (inspiradas en patentes y carteles viales), alojadas en el propio sitio (`src/fonts`), sin depender de Google Fonts. Licencia libre SIL OFL (`src/fonts/OFL.txt`).
+
 ## Páginas
 
 | Ruta | Qué tiene |
@@ -40,6 +42,17 @@ Abrí http://localhost:3000
    `fotos: ["/autos/toyota-corolla-xei-2021/1.jpg", "/autos/toyota-corolla-xei-2021/2.jpg"]`.
    Sin fotos se muestra una ilustración del color del auto.
 4. `reservado: true` lo marca como reservado; `destacado: true` lo muestra en la portada.
+
+### Fotos: lo que más cambia cómo se ve el sitio
+
+Kavak y Carone se ven profesionales sobre todo por las fotos: **todos los autos sacados en el mismo lugar, con el mismo fondo y los mismos ángulos**. Recomendación:
+
+- Elegir una pared lisa (gris o blanca) o un lugar sin cosas atrás, y sacar siempre ahí.
+- Siempre la misma secuencia: frente 3/4, lateral, trasera 3/4, interior delantero, tablero (con km), asientos traseros, baúl, motor.
+- Celular en horizontal, de día con luz pareja (sin sol directo), auto limpio.
+- La primera foto de la lista es la que aparece en el catálogo.
+
+Para la portada se puede poner una foto de la agencia o el playón en `public/portada.jpg` y escribir `"/portada.jpg"` en `fotoPortada` dentro de `src/config/site.ts`.
 
 ## Publicarlo en internet
 

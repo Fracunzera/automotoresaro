@@ -1,59 +1,49 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { site } from "@/config/site";
 import { FinancingCalculator } from "@/components/FinancingCalculator";
-import { Icon } from "@/components/Icon";
 
 export const metadata: Metadata = {
   title: "Financiación",
-  description: "Simulá la cuota de tu próximo auto usado. Anticipo + cuotas fijas, y tu usado como parte de pago.",
+  description: "Simulá la cuota de tu próximo auto usado. Anticipo más cuotas fijas, y tu usado como parte de pago.",
 };
 
 const requisitos = [
   "DNI vigente",
-  "Últimos recibos de sueldo o constancia de monotributo / autónomo",
-  "Comprobante de domicilio (servicio a tu nombre)",
-  "Sin deudas en situación irregular en el sistema financiero",
+  "Recibos de sueldo, o constancia de monotributo o autónomo",
+  "Comprobante de domicilio a tu nombre",
+  "Sin deudas en situación irregular",
 ];
 
 export default function FinanciacionPage() {
+  const { anticipoMinimo, plazos } = site.financiacion;
   return (
-    <div className="contenedor py-12">
-      <div className="grid gap-10 lg:grid-cols-[1.2fr_1fr] lg:items-start">
+    <div className="contenedor pt-10">
+      <p className="sobretitulo">Financiación</p>
+      <h1 className="titulo mt-2 max-w-2xl text-[44px] sm:text-[56px]">Tu auto con anticipo y cuotas fijas</h1>
+      <p className="mt-4 max-w-xl text-lg text-stone-600">
+        Desde {Math.round(anticipoMinimo * 100)}% de anticipo, que puede ser tu usado, y el resto en {plazos[0]} a {Math.max(...plazos)} cuotas.
+      </p>
+
+      <div className="mt-10 grid gap-10 lg:grid-cols-[1.5fr_1fr] lg:items-start">
+        <div className="rounded-lg border border-linea p-5 sm:p-7">
+          <FinancingCalculator variante="ancho" />
+        </div>
+
         <div>
-          <p className="text-sm font-semibold tracking-wide text-marca-600 uppercase">Financiación</p>
-          <h1 className="mt-2 text-4xl font-extrabold tracking-tight text-slate-900">Tu auto en cuotas fijas</h1>
-          <p className="mt-4 text-lg text-slate-600">
-            Pagás un anticipo (puede ser con tu usado) y el resto en cuotas. Simulá ahora y te ayudamos con todo el trámite.
-          </p>
-
-          <div className="mt-10 grid gap-4 sm:grid-cols-3">
-            {[
-              ["swap", "Tu usado como anticipo"],
-              ["clock", "Aprobación rápida"],
-              ["card", "Cuotas fijas en pesos"],
-            ].map(([i, t]) => (
-              <div key={t} className="rounded-2xl border border-slate-200 bg-white p-5">
-                <Icon name={i} className="size-6 text-marca-600" />
-                <p className="mt-3 text-sm font-semibold text-slate-900">{t}</p>
-              </div>
-            ))}
-          </div>
-
-          <h2 className="mt-12 text-xl font-bold text-slate-900">Requisitos</h2>
-          <ul className="mt-4 space-y-2">
-            {requisitos.map((r) => (
-              <li key={r} className="flex gap-2 text-slate-700">
-                <Icon name="check" className="size-5 shrink-0 text-green-600" /> {r}
+          <h2 className="titulo text-[28px]">Requisitos</h2>
+          <ul className="mt-4">
+            {requisitos.map((r, i) => (
+              <li key={r} className="flex gap-4 border-b border-linea py-3.5 text-[15px]">
+                <span className="font-display text-lg font-bold text-rojo">0{i + 1}</span> {r}
               </li>
             ))}
           </ul>
-
-          <p className="mt-10 text-slate-600">
-            ¿Ya sabés qué auto querés? Entrá a su ficha y simulá la cuota con el precio exacto.{" "}
-            <Link href="/autos" className="font-semibold text-marca-600 hover:underline">Ver autos →</Link>
+          <p className="mt-6 text-[15px] text-stone-600">
+            ¿Ya elegiste? En la ficha de cada auto podés simular con el precio exacto.{" "}
+            <Link href="/autos" className="font-semibold text-rojo hover:underline">Ver autos</Link>
           </p>
         </div>
-        <FinancingCalculator />
       </div>
     </div>
   );

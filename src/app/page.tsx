@@ -1,153 +1,169 @@
 import Link from "next/link";
 import { site } from "@/config/site";
-import { autos } from "@/data/autos";
-import { formatPrecio } from "@/lib/utils";
+import { autos, type Carroceria } from "@/data/autos";
 import { CarCard } from "@/components/CarCard";
+import { TipoIcono } from "@/components/CarImage";
+import { HeroBuscador } from "@/components/HeroBuscador";
 import { Icon } from "@/components/Icon";
 
-const tipos = ["SUV", "Pick-up", "Sedán", "Hatchback", "Utilitario"] as const;
-
-const pasos = [
-  { n: "1", titulo: "Elegí tu auto", texto: "Mirá fotos, informe de revisión y simulá la cuota desde tu casa." },
-  { n: "2", titulo: "Coordiná una visita", texto: "Escribinos por WhatsApp, vení a verlo y hacé la prueba de manejo." },
-  { n: "3", titulo: "Llevátelo", texto: "Entregás tu usado, financiás el resto y nosotros nos encargamos de los papeles." },
-];
+const tipos: Carroceria[] = ["SUV", "Pick-up", "Sedán", "Hatchback", "Utilitario"];
 
 export default function Home() {
-  const destacados = autos.filter((a) => a.destacado && !a.reservado).slice(0, 4);
+  const disponibles = autos.filter((a) => !a.reservado);
+  const recientes = [...disponibles].sort((a, b) => Number(!!b.destacado) - Number(!!a.destacado)).slice(0, 8);
   const marcas = Array.from(new Set(autos.map((a) => a.marca))).sort();
+  const porMarca = marcas.map((m) => [m, autos.filter((a) => a.marca === m).length] as const);
 
   return (
     <>
-      {/* HERO */}
-      <section className="relative overflow-hidden bg-marca-950 text-white">
-        <div className="absolute -right-40 -top-40 size-[520px] rounded-full bg-marca-600/40 blur-3xl" aria-hidden />
-        <div className="absolute -bottom-48 -left-24 size-[420px] rounded-full bg-acento-500/20 blur-3xl" aria-hidden />
-        <div className="contenedor relative grid gap-10 py-16 sm:py-24 lg:grid-cols-2 lg:items-center">
-          <div>
-            <p className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-acento-400">
-              <Icon name="shield" className="size-4" /> Autos usados revisados y con papeles al día
-            </p>
-            <h1 className="mt-5 text-4xl font-extrabold leading-tight tracking-tight sm:text-5xl">
-              Comprá y vendé tu auto <span className="text-acento-400">sin vueltas</span>
-            </h1>
-            <p className="mt-5 max-w-lg text-lg text-slate-300">{site.eslogan}</p>
-            <div className="mt-8 flex flex-wrap gap-3">
-              <Link href="/autos" className="btn-acento">Ver autos disponibles <Icon name="arrow" className="size-4" /></Link>
-              <Link href="/vender" className="btn border border-white/30 text-white hover:bg-white/10">Cotizar mi auto</Link>
-            </div>
+      {/* PORTADA */}
+      <section
+        className="relative bg-tinta bg-cover bg-center text-white"
+        style={site.fotoPortada ? { backgroundImage: `url(${site.fotoPortada})` } : undefined}
+      >
+        {site.fotoPortada && <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/55 to-black/20" aria-hidden />}
+        <div className="contenedor relative pb-14 pt-14 sm:pb-20 sm:pt-20">
+          <p className="sobretitulo">{site.nombre} · {site.ciudad}</p>
+          <h1 className="titulo mt-3 max-w-3xl text-[44px] uppercase text-white sm:text-[68px]">
+            Comprá, vendé o cambiá tu auto
+          </h1>
+          <p className="mt-4 max-w-xl text-lg text-stone-300">
+            {disponibles.length} autos usados revisados, listos para transferir. Financiación y tomamos tu usado.
+          </p>
+          <div className="mt-8">
+            <HeroBuscador marcas={marcas} />
           </div>
-
-          {/* Buscador */}
-          <form action="/autos" className="rounded-3xl bg-white p-6 text-slate-900 shadow-2xl sm:p-8">
-            <h2 className="text-lg font-bold">¿Qué auto estás buscando?</h2>
-            <div className="mt-5 grid gap-4 sm:grid-cols-2">
-              <div className="sm:col-span-2">
-                <label className="etiqueta" htmlFor="q">Modelo</label>
-                <input id="q" name="q" className="campo" placeholder="Ej: Corolla, Amarok, 208…" />
-              </div>
-              <div>
-                <label className="etiqueta" htmlFor="marca">Marca</label>
-                <select id="marca" name="marca" className="campo" defaultValue="">
-                  <option value="">Todas</option>
-                  {marcas.map((m) => <option key={m}>{m}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="etiqueta" htmlFor="precioMax">Precio hasta</label>
-                <select id="precioMax" name="precioMax" className="campo" defaultValue="">
-                  <option value="">Sin límite</option>
-                  {[15000000, 20000000, 25000000, 30000000, 40000000].map((n) => (
-                    <option key={n} value={n}>{formatPrecio(n)}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-            <button type="submit" className="btn-primario mt-6 w-full">
-              <Icon name="search" className="size-4" /> Buscar
-            </button>
-            <p className="mt-4 text-center text-sm text-slate-500">
-              {autos.filter((a) => !a.reservado).length} autos disponibles hoy
-            </p>
-          </form>
         </div>
       </section>
 
-      {/* TIPOS */}
-      <section className="contenedor -mt-px py-10">
-        <div className="flex flex-wrap justify-center gap-3">
-          {tipos.map((t) => (
+      {/* BANNERS */}
+      <section className="contenedor mt-8 grid gap-4 md:grid-cols-3">
+        <Link href="/vender" className="group flex min-h-40 flex-col justify-between rounded-lg bg-rojo p-6 text-white">
+          <p className="titulo text-[30px] text-white">Vendé tu auto en el día</p>
+          <span className="inline-flex items-center gap-2 text-[15px] font-semibold">
+            Pedí tu cotización <Icon name="arrow" className="size-4 transition-transform group-hover:translate-x-1" />
+          </span>
+        </Link>
+        <Link href="/financiacion" className="group flex min-h-40 flex-col justify-between rounded-lg bg-tinta p-6 text-white">
+          <p className="titulo text-[30px] text-white">Hasta {Math.max(...site.financiacion.plazos)} cuotas fijas</p>
+          <span className="inline-flex items-center gap-2 text-[15px] font-semibold">
+            Simulá tu cuota <Icon name="arrow" className="size-4 transition-transform group-hover:translate-x-1" />
+          </span>
+        </Link>
+        <Link href="/vender?modo=cambio" className="group flex min-h-40 flex-col justify-between rounded-lg bg-papel p-6">
+          <p className="titulo text-[30px]">Entregá tu usado como parte de pago</p>
+          <span className="inline-flex items-center gap-2 text-[15px] font-semibold text-tinta">
+            Cotizá tu usado <Icon name="arrow" className="size-4 transition-transform group-hover:translate-x-1" />
+          </span>
+        </Link>
+      </section>
+
+      {/* POR TIPO */}
+      <section className="contenedor mt-16">
+        <h2 className="titulo text-[32px]">Buscá por tipo</h2>
+        <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+          {tipos.map((t) => {
+            const n = autos.filter((a) => a.carroceria === t).length;
+            return (
+              <Link
+                key={t}
+                href={`/autos?carroceria=${encodeURIComponent(t)}`}
+                className="group flex flex-col items-center rounded-lg border border-linea px-4 pb-4 pt-5 transition-colors hover:border-tinta"
+              >
+                <TipoIcono tipo={t} className="h-11 text-stone-500 transition-colors group-hover:text-rojo" />
+                <span className="mt-3 font-semibold">{t}</span>
+                <span className="text-[13px] text-stone-500">{n} {n === 1 ? "auto" : "autos"}</span>
+              </Link>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* STOCK */}
+      <section className="contenedor mt-16">
+        <div className="flex items-end justify-between gap-4">
+          <h2 className="titulo text-[32px]">Autos disponibles</h2>
+          <Link href="/autos" className="text-[15px] font-semibold text-rojo hover:underline">Ver los {autos.length} autos</Link>
+        </div>
+        <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          {recientes.map((a) => <CarCard key={a.slug} auto={a} />)}
+        </div>
+      </section>
+
+      {/* POR MARCA */}
+      <section className="contenedor mt-16">
+        <h2 className="titulo text-[32px]">Buscá por marca</h2>
+        <div className="mt-5 flex flex-wrap gap-2">
+          {porMarca.map(([m, n]) => (
             <Link
-              key={t}
-              href={`/autos?carroceria=${encodeURIComponent(t)}`}
-              className="rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-marca-500 hover:text-marca-600"
+              key={m}
+              href={`/autos?marca=${encodeURIComponent(m)}`}
+              className="rounded-md border border-linea px-4 py-2.5 text-[15px] font-semibold transition-colors hover:border-tinta"
             >
-              {t}
+              {m} <span className="ml-1 font-normal text-stone-400">{n}</span>
             </Link>
           ))}
         </div>
       </section>
 
-      {/* DESTACADOS */}
-      <section className="contenedor py-8">
-        <div className="flex items-end justify-between gap-4">
-          <div>
-            <h2 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Autos destacados</h2>
-            <p className="mt-1 text-slate-500">Seleccionados y revisados por nuestro equipo.</p>
+      {/* VENDER */}
+      <section className="contenedor mt-20">
+        <div className="grid overflow-hidden rounded-lg bg-tinta text-white lg:grid-cols-2">
+          <div className="p-8 sm:p-12">
+            <p className="sobretitulo">Vender o permutar</p>
+            <h2 className="titulo mt-3 text-[40px] text-white sm:text-[48px]">Te compramos el auto. Así de simple.</h2>
+            <p className="mt-4 max-w-md text-stone-300">
+              Sin publicar, sin atender llamados y sin recibir desconocidos en tu casa.
+            </p>
+            <Link href="/vender" className="btn-rojo mt-8">Cotizar mi auto</Link>
           </div>
-          <Link href="/autos" className="hidden text-sm font-semibold text-marca-600 hover:underline sm:block">
-            Ver todos →
-          </Link>
+          <ol className="grid border-t border-white/10 lg:border-l lg:border-t-0">
+            {[
+              ["Contanos de tu auto", "Marca, modelo, año y kilómetros. Si tenés fotos, mejor."],
+              ["Recibí una oferta", "Te respondemos por WhatsApp con un valor estimado."],
+              ["Revisión y pago", "Lo vemos en la agencia, confirmamos el precio y cobrás o lo usás como parte de pago."],
+            ].map(([t, d], i) => (
+              <li key={t} className="flex gap-5 border-b border-white/10 px-8 py-6 last:border-0 sm:px-12">
+                <span className="font-display text-4xl font-extrabold leading-none text-rojo">0{i + 1}</span>
+                <div>
+                  <p className="text-lg font-semibold">{t}</p>
+                  <p className="mt-1 text-[15px] text-stone-400">{d}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
         </div>
-        <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {destacados.map((a) => <CarCard key={a.slug} auto={a} />)}
-        </div>
-        <Link href="/autos" className="btn-secundario mt-6 w-full sm:hidden">Ver todos los autos</Link>
       </section>
 
-      {/* BENEFICIOS */}
-      <section className="contenedor py-16">
-        <h2 className="text-center text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">¿Por qué comprar con nosotros?</h2>
-        <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+      {/* COMPROMISOS */}
+      <section className="contenedor mt-20">
+        <h2 className="titulo text-[32px]">Cómo trabajamos</h2>
+        <div className="mt-6 grid gap-x-8 gap-y-8 sm:grid-cols-2 lg:grid-cols-4">
           {site.beneficios.map((b) => (
-            <div key={b.titulo} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-              <div className="grid size-12 place-items-center rounded-xl bg-marca-50 text-marca-600">
-                <Icon name={b.icono} className="size-6" />
-              </div>
-              <h3 className="mt-4 font-semibold text-slate-900">{b.titulo}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-slate-600">{b.texto}</p>
+            <div key={b.titulo} className="border-t-[3px] border-tinta pt-4">
+              <h3 className="text-lg font-semibold">{b.titulo}</h3>
+              <p className="mt-2 text-[15px] leading-relaxed text-stone-600">{b.texto}</p>
             </div>
           ))}
         </div>
       </section>
 
-      {/* CÓMO FUNCIONA */}
-      <section className="bg-white py-16">
-        <div className="contenedor">
-          <h2 className="text-center text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Tu próximo auto en 3 pasos</h2>
-          <div className="mt-10 grid gap-8 md:grid-cols-3">
-            {pasos.map((p) => (
-              <div key={p.n} className="text-center">
-                <div className="mx-auto grid size-14 place-items-center rounded-full bg-acento-500 text-xl font-extrabold text-marca-950">{p.n}</div>
-                <h3 className="mt-4 text-lg font-semibold text-slate-900">{p.titulo}</h3>
-                <p className="mx-auto mt-2 max-w-xs text-sm text-slate-600">{p.texto}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* VENDER CTA */}
-      <section className="contenedor py-16">
-        <div className="grid items-center gap-8 overflow-hidden rounded-3xl bg-gradient-to-br from-marca-600 to-marca-900 p-8 text-white sm:p-12 lg:grid-cols-[1.5fr_1fr]">
+      {/* VISITANOS */}
+      <section className="contenedor mt-20">
+        <div className="flex flex-col gap-6 rounded-lg bg-papel p-8 sm:p-10 md:flex-row md:items-center md:justify-between">
           <div>
-            <h2 className="text-3xl font-extrabold tracking-tight">¿Querés vender o cambiar tu auto?</h2>
-            <p className="mt-3 max-w-xl text-marca-100">
-              Te lo cotizamos en el día. Te pagamos en el acto o lo tomamos como parte de pago de tu próximo auto.
+            <h2 className="titulo text-[32px]">Vení a verlos</h2>
+            <p className="mt-2 text-stone-700">
+              {site.direccion}, {site.ciudad} · {site.horarios}
             </p>
           </div>
-          <div className="lg:text-right">
-            <Link href="/vender" className="btn-acento">Cotizar mi auto gratis <Icon name="arrow" className="size-4" /></Link>
+          <div className="flex flex-wrap gap-2">
+            <a href={site.mapa} target="_blank" rel="noopener noreferrer" className="btn-tinta">
+              <Icon name="pin" className="size-4" /> Cómo llegar
+            </a>
+            <a href={`tel:${site.telefono.replace(/[^+\d]/g, "")}`} className="btn-borde">
+              <Icon name="phone" className="size-4" /> Llamar
+            </a>
           </div>
         </div>
       </section>

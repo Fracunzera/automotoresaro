@@ -1,55 +1,59 @@
 import type { Metadata } from "next";
 import { SellForm } from "@/components/SellForm";
-import { Icon } from "@/components/Icon";
 
 export const metadata: Metadata = {
   title: "Vendé tu auto",
-  description: "Cotizá tu auto usado gratis. Te pagamos en el acto o lo tomamos como parte de pago.",
+  description: "Cotizá tu auto usado gratis. Te lo compramos o lo tomamos como parte de pago.",
 };
 
-const pasos = [
-  { icono: "doc", titulo: "Contanos de tu auto", texto: "Completá el formulario en 1 minuto. Si tenés fotos, mejor." },
-  { icono: "phone", titulo: "Recibí una oferta", texto: "Te respondemos por WhatsApp con una cotización estimada." },
-  { icono: "check", titulo: "Inspección", texto: "Lo revisamos en persona y confirmamos el precio final." },
-  { icono: "card", titulo: "Cobrá o cambialo", texto: "Te pagamos en el acto o lo usás como parte de pago." },
-];
+type SP = Promise<Record<string, string | string[] | undefined>>;
 
-export default function VenderPage() {
+export default async function VenderPage({ searchParams }: { searchParams: SP }) {
+  const sp = await searchParams;
+  const s = (k: string) => (typeof sp[k] === "string" ? (sp[k] as string) : undefined);
+  const cambio = s("modo") === "cambio";
+
   return (
-    <div className="contenedor py-12">
-      <div className="grid gap-10 lg:grid-cols-[1fr_1.2fr] lg:items-start">
+    <div className="contenedor pt-10">
+      <div className="grid gap-10 lg:grid-cols-[1fr_1.15fr] lg:items-start">
         <div>
-          <p className="text-sm font-semibold text-marca-600 uppercase tracking-wide">Vendé tu auto</p>
-          <h1 className="mt-2 text-4xl font-extrabold tracking-tight text-slate-900">
-            Vendé tu auto rápido, seguro y sin vueltas
+          <p className="sobretitulo">{cambio ? "Permuta" : "Vendé tu auto"}</p>
+          <h1 className="titulo mt-2 text-[44px] sm:text-[56px]">
+            {cambio ? "Entregá tu auto y llevate otro" : "Te compramos el auto"}
           </h1>
-          <p className="mt-4 text-lg text-slate-600">
-            Olvidate de publicar, atender llamados y recibir desconocidos en tu casa. Nosotros te lo compramos.
+          <p className="mt-4 max-w-md text-lg text-stone-600">
+            Completá los datos en un minuto y te respondemos por WhatsApp con una cotización. Sin compromiso.
           </p>
-          <ol className="mt-10 space-y-6">
-            {pasos.map((p, i) => (
-              <li key={p.titulo} className="flex gap-4">
-                <div className="grid size-11 shrink-0 place-items-center rounded-xl bg-marca-50 text-marca-600">
-                  <Icon name={p.icono} className="size-6" />
-                </div>
-                <div>
-                  <h2 className="font-semibold text-slate-900">{i + 1}. {p.titulo}</h2>
-                  <p className="text-sm text-slate-600">{p.texto}</p>
-                </div>
-              </li>
+
+          <dl className="mt-10 grid max-w-md grid-cols-2 border-l border-t border-linea">
+            {[
+              ["Respuesta", "Por WhatsApp"],
+              ["Pago", "Al cerrar la operación"],
+              ["Trámites", "Los gestionamos nosotros"],
+              ["Revisión", "En la agencia"],
+            ].map(([k, v]) => (
+              <div key={k} className="border-b border-r border-linea p-4">
+                <dt className="text-[13px] text-stone-500">{k}</dt>
+                <dd className="font-semibold">{v}</dd>
+              </div>
             ))}
-          </ol>
-          <div className="mt-10 rounded-2xl bg-acento-500/10 p-5 text-sm text-slate-700">
-            <p className="font-semibold text-slate-900">¿Qué necesitás para vender?</p>
-            <ul className="mt-2 list-disc space-y-1 pl-5">
-              <li>Título del automotor y cédula verde</li>
-              <li>DNI del titular</li>
-              <li>Formulario 08 (lo podemos gestionar nosotros)</li>
+          </dl>
+
+          <div className="mt-10 max-w-md">
+            <h2 className="text-lg font-semibold">Qué vas a necesitar</h2>
+            <ul className="mt-3 space-y-2 text-[15px] text-stone-700">
+              <li className="border-b border-linea pb-2">Título y cédula del auto</li>
+              <li className="border-b border-linea pb-2">DNI del titular</li>
+              <li className="border-b border-linea pb-2">Formulario 08 (lo podemos gestionar nosotros)</li>
               <li>Libre deuda de patentes</li>
             </ul>
           </div>
         </div>
-        <SellForm />
+
+        <SellForm
+          key={JSON.stringify(sp)}
+          inicial={{ marca: s("marca") ?? "", modelo: s("modelo") ?? "", anio: s("anio") ?? "", modo: cambio ? "cambio" : "venta" }}
+        />
       </div>
     </div>
   );

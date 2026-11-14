@@ -1,50 +1,67 @@
 import Link from "next/link";
 import type { Auto } from "@/data/autos";
 import { site } from "@/config/site";
-import { cuotaMensual, formatKm, formatPrecio } from "@/lib/utils";
+import { cuotaMensual, formatKm, formatNumero } from "@/lib/utils";
 import { CarImage } from "./CarImage";
+
+/** Etiqueta principal que se muestra sobre la foto (una sola, como en los portales grandes). */
+function etiqueta(a: Auto): { texto: string; clase: string } | null {
+  if (a.reservado) return { texto: "Reservado", clase: "bg-tinta text-white" };
+  if (a.unicoDueno) return { texto: "Único dueño", clase: "bg-white text-tinta" };
+  if (a.serviceOficial) return { texto: "Services oficiales", clase: "bg-white text-tinta" };
+  return null;
+}
+
+export function Precio({ valor, className = "" }: { valor: number; className?: string }) {
+  return (
+    <span className={`font-display font-bold tracking-tight ${className}`}>
+      <span className="mr-0.5 align-[0.35em] text-[0.55em]">$</span>
+      {formatNumero(valor)}
+    </span>
+  );
+}
 
 export function CarCard({ auto }: { auto: Auto }) {
   const { tna, anticipoMinimo, plazos } = site.financiacion;
   const plazoMax = Math.max(...plazos);
   const cuota = cuotaMensual(auto.precio * (1 - anticipoMinimo), plazoMax, tna);
+  const tag = etiqueta(auto);
 
   return (
     <Link
       href={`/autos/${auto.slug}`}
-      className="group flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg"
+      className="group flex flex-col overflow-hidden rounded-lg border border-linea bg-white transition-shadow hover:shadow-[0_6px_24px_rgba(0,0,0,0.09)]"
     >
       <div className="relative">
-        <CarImage auto={auto} className="aspect-[4/3]" />
-        <div className="absolute left-3 top-3 flex flex-wrap gap-1.5">
-          {auto.reservado && (
-            <span className="rounded-full bg-slate-900 px-2.5 py-1 text-xs font-semibold text-white">Reservado</span>
-          )}
-          {auto.unicoDueno && (
-            <span className="rounded-full bg-white/90 px-2.5 py-1 text-xs font-semibold text-slate-800">Único dueño</span>
-          )}
-        </div>
+        <CarImage auto={auto} className={`aspect-[4/3] ${auto.reservado ? "opacity-70" : ""}`} />
+        {tag && (
+          <span className={`absolute bottom-3 left-3 rounded-sm px-2 py-1 text-xs font-semibold shadow-sm ${tag.clase}`}>
+            {tag.texto}
+          </span>
+        )}
       </div>
-      <div className="flex flex-1 flex-col p-4">
-        <h3 className="font-semibold text-slate-900 group-hover:text-marca-600">
-          {auto.marca} {auto.modelo}
+
+      <div className="px-4 pb-3 pt-3.5">
+        <h3 className="text-[17px] font-semibold leading-snug text-tinta">
+          {auto.marca} <span className="text-stone-400">·</span> {auto.modelo}
         </h3>
-        <p className="truncate text-sm text-slate-500">{auto.version}</p>
-        <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-600">
-          <span>{auto.anio}</span>
-          <span aria-hidden>·</span>
-          <span>{formatKm(auto.km)}</span>
-          <span aria-hidden>·</span>
-          <span>{auto.transmision}</span>
-          <span aria-hidden>·</span>
-          <span>{auto.combustible}</span>
-        </div>
-        <div className="mt-auto pt-4">
-          <p className="text-xl font-bold text-slate-900">{formatPrecio(auto.precio)}</p>
-          <p className="text-xs text-slate-500">
-            o anticipo + {plazoMax} cuotas de <span className="font-semibold text-marca-600">{formatPrecio(cuota)}</span>
-          </p>
-        </div>
+        <p className="mt-0.5 truncate text-sm text-stone-500">
+          {auto.anio} · {formatKm(auto.km)} · {auto.version}
+        </p>
+      </div>
+
+      <div className="mx-4 border-t border-linea py-3">
+        <p className="text-[13px] text-stone-500">Precio de contado</p>
+        <Precio valor={auto.precio} className="text-[28px] leading-tight text-tinta" />
+        <p className="text-[13px] text-stone-600">
+          o <span className="font-semibold text-tinta">${formatNumero(Math.round(cuota))}</span> / mes*
+        </p>
+      </div>
+
+      <div className="mx-4 mt-auto flex gap-4 border-t border-linea py-2.5 text-[13px] text-stone-500">
+        <span>{auto.transmision}</span>
+        <span>{auto.combustible}</span>
+        <span>{auto.carroceria}</span>
       </div>
     </Link>
   );
