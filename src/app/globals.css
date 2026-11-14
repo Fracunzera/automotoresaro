@@ -1,0 +1,50 @@
+@import "tailwindcss";
+
+@theme {
+  --color-marca-50: #eef4ff;
+  --color-marca-100: #dbe6fe;
+  --color-marca-500: #2f5bea;
+  --color-marca-600: #1f45c9;
+  --color-marca-700: #1a37a0;
+  --color-marca-900: #0d1b4d;
+  --color-marca-950: #081131;
+  --color-acento-400: #ffb547;
+  --color-acento-500: #ff9a1f;
+  --color-acento-600: #e57f00;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: #f7f8fb;
+  color: #0f172a;
+}
+
+@utility btn {
+  @apply inline-flex items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-semibold transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marca-500 disabled:opacity-50;
+}
+@utility btn-primario {
+  @apply btn bg-marca-600 text-white hover:bg-marca-700;
+}
+@utility btn-acento {
+  @apply btn bg-acento-500 text-marca-950 hover:bg-acento-400;
+}
+@utility btn-secundario {
+  @apply btn border border-slate-300 bg-white text-slate-900 hover:border-slate-400 hover:bg-slate-50;
+}
+@utility btn-whatsapp {
+  @apply btn bg-[#25d366] text-white hover:bg-[#1ebe5b];
+}
+
+@utility campo {
+  @apply w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-marca-500 focus:ring-2 focus:ring-marca-100;
+}
+@utility etiqueta {
+  @apply mb-1 block text-xs font-semibold tracking-wide text-slate-600 uppercase;
+}
+@utility contenedor {
+  @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
+}
