@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getTodos } from "@/lib/autos";
 import { leerNegocio } from "@/lib/negocio";
+import { leerClientes } from "@/lib/clientes";
 import { MODO_COMISION_TEXTO, calcularGanancia } from "@/lib/negocio-tipos";
 import { formatNumero } from "@/lib/utils";
 import { BotonBorrarEjemplos } from "@/components/admin/BotonBorrarEjemplos";
@@ -19,7 +20,7 @@ function Dato({ titulo, valor, detalle }: { titulo: string; valor: string; detal
 }
 
 export default async function Tablero() {
-  const [autos, negocio] = await Promise.all([getTodos(), leerNegocio()]);
+  const [autos, negocio, clientes] = await Promise.all([getTodos(), leerNegocio(), leerClientes()]);
   const { ajustes } = negocio;
   const n = (id: string) => negocio.autos[id];
 
@@ -142,6 +143,40 @@ export default async function Tablero() {
             Cuando vendas un auto, tocá <b>“Lo vendí”</b> en Mis autos y acá vas a ver las ventas y la ganancia.
           </p>
         )}
+      </section>
+
+      {/* Clientes */}
+      <section>
+        <h2 className="text-xl font-bold">Clientes de la página</h2>
+        <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
+          <Dato titulo="Registrados" valor={String(clientes.length)} detalle={`${clientes.filter((c) => new Date(c.creado).getMonth() === hoy.getMonth() && new Date(c.creado).getFullYear() === hoy.getFullYear()).length} nuevos este mes`} />
+          <Dato titulo="Aceptan mails" valor={String(clientes.filter((c) => c.aceptaMails).length)} />
+          <div className="col-span-2 sm:col-span-1">
+            <Dato titulo="Autos guardados en favoritos" valor={String(clientes.reduce((s, c) => s + c.favoritos.length, 0))} />
+          </div>
+        </div>
+        {(() => {
+          const top = stock
+            .map((a) => ({ a, n: clientes.filter((c) => c.favoritos.includes(a.id)).length }))
+            .filter((x) => x.n > 0)
+            .sort((x, y) => y.n - x.n)
+            .slice(0, 5);
+          return top.length > 0 ? (
+            <div className="tarjeta-g mt-3 divide-y-2 divide-linea">
+              <p className="px-5 py-3 text-base font-semibold text-stone-600">Los autos que más gustan</p>
+              {top.map(({ a, n }) => (
+                <Link key={a.id} href={`/admin/autos/${a.id}`} className="flex justify-between gap-4 px-5 py-3 text-lg hover:bg-papel">
+                  <span className="font-semibold">{a.marca} {a.modelo} {a.anio}</span>
+                  <span className="text-rojo">♥ {n}</span>
+                </Link>
+              ))}
+            </div>
+          ) : null;
+        })()}
+        <div className="mt-3 flex flex-wrap gap-2">
+          <Link href="/admin/clientes" className="btn-g border-2 border-tinta bg-white hover:bg-papel">Ver clientes</Link>
+          <Link href="/admin/mails" className="btn-g border-2 border-tinta bg-white hover:bg-papel">Mandar un mail</Link>
+        </div>
       </section>
 
       {/* Avisos */}

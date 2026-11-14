@@ -3,6 +3,7 @@
  */
 import { revalidatePath, revalidateTag, unstable_cache } from "next/cache";
 import { guardarPrivado, leerPrivado } from "./almacen";
+import { conCandado } from "./candado";
 import { AJUSTES_INICIALES, type Ajustes, type Financiacion, type NegocioAuto } from "./negocio-tipos";
 
 interface DatosNegocio {
@@ -36,38 +37,46 @@ async function guardar(d: DatosNegocio) {
   revalidatePath("/", "layout");
 }
 
-export async function guardarNegocioAuto(id: string, n: NegocioAuto) {
-  const d = await leerNegocio();
-  d.autos[id] = { ...d.autos[id], ...n };
-  await guardar(d);
+export function guardarNegocioAuto(id: string, n: NegocioAuto) {
+  return conCandado("negocio", async () => {
+    const d = await leerNegocio();
+    d.autos[id] = { ...d.autos[id], ...n };
+    await guardar(d);
+  });
 }
 
-export async function registrarVenta(id: string, precioVenta: number | null) {
-  const d = await leerNegocio();
-  const actual = d.autos[id];
-  if (precioVenta === null) {
-    if (!actual?.fechaVenta) return;
-    delete actual.precioVenta;
-    delete actual.fechaVenta;
-  } else {
-    d.autos[id] = {
-      ...(actual ?? { tipo: "propio", costo: 0, gastos: 0, duenoNombre: "", duenoTelefono: "", comisionModo: d.ajustes.comisionModo, comisionValor: d.ajustes.comisionValor, notas: "" }),
-      precioVenta,
-      fechaVenta: new Date().toISOString(),
-    };
-  }
-  await guardar(d);
+export function registrarVenta(id: string, precioVenta: number | null) {
+  return conCandado("negocio", async () => {
+    const d = await leerNegocio();
+    const actual = d.autos[id];
+    if (precioVenta === null) {
+      if (!actual?.fechaVenta) return;
+      delete actual.precioVenta;
+      delete actual.fechaVenta;
+    } else {
+      d.autos[id] = {
+        ...(actual ?? { tipo: "propio", costo: 0, gastos: 0, duenoNombre: "", duenoTelefono: "", comisionModo: d.ajustes.comisionModo, comisionValor: d.ajustes.comisionValor, notas: "" }),
+        precioVenta,
+        fechaVenta: new Date().toISOString(),
+      };
+    }
+    await guardar(d);
+  });
 }
 
-export async function borrarNegocioAuto(id: string) {
-  const d = await leerNegocio();
-  if (!(id in d.autos)) return;
-  delete d.autos[id];
-  await guardar(d);
+export function borrarNegocioAuto(id: string) {
+  return conCandado("negocio", async () => {
+    const d = await leerNegocio();
+    if (!(id in d.autos)) return;
+    delete d.autos[id];
+    await guardar(d);
+  });
 }
 
-export async function guardarAjustes(a: Ajustes) {
-  const d = await leerNegocio();
-  d.ajustes = a;
-  await guardar(d);
+export function guardarAjustes(a: Ajustes) {
+  return conCandado("negocio", async () => {
+    const d = await leerNegocio();
+    d.ajustes = a;
+    await guardar(d);
+  });
 }

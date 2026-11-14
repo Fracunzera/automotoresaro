@@ -5,6 +5,7 @@ import { randomUUID } from "node:crypto";
 import { revalidatePath, revalidateTag, unstable_cache } from "next/cache";
 import { autosEjemplo } from "@/data/ejemplos";
 import { borrarFotos, guardarLista, leerLista } from "./almacen";
+import { conCandado } from "./candado";
 import type { Auto, DatosAuto, Estado } from "./tipos";
 
 const TAG = "autos";
@@ -52,55 +53,65 @@ async function listaActual(): Promise<Auto[]> {
   return (await leerLista()) ?? autosEjemplo;
 }
 
-export async function crearAuto(datos: DatosAuto, estado: Estado): Promise<Auto> {
-  const lista = await listaActual();
-  const id = randomUUID();
-  const ahora = new Date().toISOString();
-  const auto: Auto = {
-    ...datos,
-    id,
-    slug: `${aSlug(`${datos.marca} ${datos.modelo} ${datos.anio}`)}-${id.slice(0, 5)}`,
-    estado,
-    creado: ahora,
-    actualizado: ahora,
-  };
-  await guardarYRefrescar([auto, ...lista]);
-  return auto;
+export function crearAuto(datos: DatosAuto, estado: Estado): Promise<Auto> {
+  return conCandado("autos", async () => {
+    const lista = await listaActual();
+    const id = randomUUID();
+    const ahora = new Date().toISOString();
+    const auto: Auto = {
+      ...datos,
+      id,
+      slug: `${aSlug(`${datos.marca} ${datos.modelo} ${datos.anio}`)}-${id.slice(0, 5)}`,
+      estado,
+      creado: ahora,
+      actualizado: ahora,
+    };
+    await guardarYRefrescar([auto, ...lista]);
+    return auto;
+  });
 }
 
-export async function actualizarAuto(id: string, datos: DatosAuto): Promise<Auto> {
-  const lista = await listaActual();
-  const i = lista.findIndex((a) => a.id === id);
-  if (i === -1) throw new Error("No encontramos ese auto. Puede que lo hayan borrado.");
-  const anterior = lista[i];
-  const auto: Auto = { ...anterior, ...datos, actualizado: new Date().toISOString() };
-  lista[i] = auto;
-  await guardarYRefrescar(lista);
-  await borrarFotos(anterior.fotos.filter((f) => !auto.fotos.includes(f)));
-  return auto;
+export function actualizarAuto(id: string, datos: DatosAuto): Promise<Auto> {
+  return conCandado("autos", async () => {
+    const lista = await listaActual();
+    const i = lista.findIndex((a) => a.id === id);
+    if (i === -1) throw new Error("No encontramos ese auto. Puede que lo hayan borrado.");
+    const anterior = lista[i];
+    const auto: Auto = { ...anterior, ...datos, actualizado: new Date().toISOString() };
+    lista[i] = auto;
+    await guardarYRefrescar(lista);
+    await borrarFotos(anterior.fotos.filter((f) => !auto.fotos.includes(f)));
+    return auto;
+  });
 }
 
-export async function cambiarEstado(id: string, estado: Estado): Promise<Auto> {
-  const lista = await listaActual();
-  const auto = lista.find((a) => a.id === id);
-  if (!auto) throw new Error("No encontramos ese auto. Puede que lo hayan borrado.");
-  auto.estado = estado;
-  auto.actualizado = new Date().toISOString();
-  await guardarYRefrescar(lista);
-  return auto;
+export function cambiarEstado(id: string, estado: Estado): Promise<Auto> {
+  return conCandado("autos", async () => {
+    const lista = await listaActual();
+    const auto = lista.find((a) => a.id === id);
+    if (!auto) throw new Error("No encontramos ese auto. Puede que lo hayan borrado.");
+    auto.estado = estado;
+    auto.actualizado = new Date().toISOString();
+    await guardarYRefrescar(lista);
+    return auto;
+  });
 }
 
-export async function borrarAuto(id: string): Promise<void> {
-  const lista = await listaActual();
-  const auto = lista.find((a) => a.id === id);
-  if (!auto) return;
-  await guardarYRefrescar(lista.filter((a) => a.id !== id));
-  await borrarFotos(auto.fotos);
+export function borrarAuto(id: string): Promise<void> {
+  return conCandado("autos", async () => {
+    const lista = await listaActual();
+    const auto = lista.find((a) => a.id === id);
+    if (!auto) return;
+    await guardarYRefrescar(lista.filter((a) => a.id !== id));
+    await borrarFotos(auto.fotos);
+  });
 }
 
-export async function borrarEjemplos(): Promise<number> {
-  const lista = await listaActual();
-  const reales = lista.filter((a) => !a.ejemplo);
-  await guardarYRefrescar(reales);
-  return lista.length - reales.length;
+export function borrarEjemplos(): Promise<number> {
+  return conCandado("autos", async () => {
+    const lista = await listaActual();
+    const reales = lista.filter((a) => !a.ejemplo);
+    await guardarYRefrescar(reales);
+    return lista.length - reales.length;
+  });
 }

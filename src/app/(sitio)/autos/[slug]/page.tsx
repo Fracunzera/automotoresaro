@@ -9,6 +9,7 @@ import { CarCard, Precio } from "@/components/CarCard";
 import { FinancingCalculator } from "@/components/FinancingCalculator";
 import { Gallery } from "@/components/Gallery";
 import { Icon, WhatsAppIcon } from "@/components/Icon";
+import { BotonFavorito } from "@/components/cuenta/ClienteContext";
 
 type Params = Promise<{ slug: string }>;
 
@@ -184,6 +185,7 @@ export default async function AutoPage({ params }: { params: Params }) {
               <Link href="/vender?modo=cambio" className="btn-borde w-full">
                 <Icon name="swap" className="size-5" /> Entregar mi usado
               </Link>
+              <BotonFavorito autoId={auto.id} conTexto className="btn-borde w-full" />
             </div>
 
             <ul className="mt-5 space-y-2.5 border-t border-linea pt-4 text-sm text-stone-700">

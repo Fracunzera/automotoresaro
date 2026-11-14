@@ -27,6 +27,7 @@ export function Footer() {
             <li><Link href="/vender?modo=cambio" className="hover:text-white">Entregar mi usado</Link></li>
             <li><Link href="/financiacion" className="hover:text-white">Financiación</Link></li>
             <li><Link href="/nosotros#preguntas" className="hover:text-white">Preguntas frecuentes</Link></li>
+            <li><Link href="/cuenta" className="hover:text-white">Mis favoritos</Link></li>
           </ul>
         </div>
         <div>
@@ -48,7 +49,11 @@ export function Footer() {
       <div className="border-t border-white/10">
         <div className="contenedor flex flex-col gap-1 py-5 text-[13px] text-stone-500 sm:flex-row sm:justify-between">
           <p>© {new Date().getFullYear()} {site.nombre}</p>
-          <p>Precios y cuotas de referencia, sujetos a cambios sin previo aviso.</p>
+          <p>
+            Precios y cuotas de referencia, sujetos a cambios sin previo aviso. ·{" "}
+            <Link href="/privacidad" className="hover:text-white">Privacidad</Link> ·{" "}
+            <Link href="/ingresar?agencia=1" className="hover:text-white">Acceso agencia</Link>
+          </p>
         </div>
       </div>
     </footer>

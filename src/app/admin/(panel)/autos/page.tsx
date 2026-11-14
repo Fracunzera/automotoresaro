@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getTodos } from "@/lib/autos";
 import { leerNegocio } from "@/lib/negocio";
+import { leerClientes } from "@/lib/clientes";
 import { calcularGanancia, paraElDueno } from "@/lib/negocio-tipos";
 import { ESTADOS, ESTADO_TEXTO, type Estado } from "@/lib/tipos";
 import { ListaAutos, type FilaAuto } from "@/components/admin/ListaAutos";
@@ -9,7 +10,7 @@ type SP = Promise<Record<string, string | string[] | undefined>>;
 
 export default async function MisAutos({ searchParams }: { searchParams: SP }) {
   const sp = await searchParams;
-  const [autos, negocio] = await Promise.all([getTodos(), leerNegocio()]);
+  const [autos, negocio, clientes] = await Promise.all([getTodos(), leerNegocio(), leerClientes()]);
   const pedido = typeof sp.ver === "string" && (ESTADOS as readonly string[]).includes(sp.ver) ? (sp.ver as Estado) : null;
   const ok = typeof sp.ok === "string" ? sp.ok.slice(0, 300) : undefined;
 
@@ -28,6 +29,7 @@ export default async function MisAutos({ searchParams }: { searchParams: SP }) {
       ganancia: n ? calcularGanancia(n, precio, negocio.ajustes.comisionMinima) : null,
       alDueno: n ? paraElDueno(n, precio, negocio.ajustes.comisionMinima) : null,
       precioVenta: n?.precioVenta ?? null,
+      interesados: clientes.filter((c) => c.favoritos.includes(a.id)).length,
     };
   });
 

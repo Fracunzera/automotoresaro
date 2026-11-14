@@ -9,6 +9,8 @@ const links = [
   { href: "/admin", label: "Inicio", exacto: true },
   { href: "/admin/autos", label: "Mis autos" },
   { href: "/admin/autos/nuevo", label: "Cargar auto" },
+  { href: "/admin/clientes", label: "Clientes" },
+  { href: "/admin/mails", label: "Mails" },
   { href: "/admin/ajustes", label: "Comisiones" },
 ];
 
@@ -32,12 +34,12 @@ export function PanelNav() {
           </form>
         </div>
       </div>
-      <nav className="mx-auto grid max-w-5xl grid-cols-2 px-2 sm:flex sm:gap-1 sm:px-4">
+      <nav className="mx-auto grid max-w-5xl grid-cols-3 px-1 sm:flex sm:gap-1 sm:px-4">
         {links.map((l) => (
           <Link
             key={l.href}
             href={l.href}
-            className={`border-b-4 px-3 py-3 text-center text-lg font-semibold sm:text-left ${
+            className={`border-b-4 px-1 py-3 text-center text-base font-semibold sm:px-3 sm:text-left sm:text-lg ${
               activo(l) ? "border-rojo text-white" : "border-transparent text-stone-400 hover:text-white"
             }`}
           >

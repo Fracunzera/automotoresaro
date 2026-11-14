@@ -6,6 +6,7 @@ import { actualizarAuto, borrarAuto, borrarEjemplos, cambiarEstado, crearAuto } 
 import { usaNube } from "@/lib/almacen";
 import { borrarNegocioAuto, guardarAjustes, guardarNegocioAuto, registrarVenta } from "@/lib/negocio";
 import type { Ajustes, ModoComision, NegocioAuto } from "@/lib/negocio-tipos";
+import { emailValido, normalizarEmail, registrarCompra } from "@/lib/clientes";
 import { COOKIE_SESION, DURACION_SESION_SEG, crearToken, iguales, passwordConfigurada, tokenValido } from "@/lib/sesion";
 import {
   CARROCERIAS, COMBUSTIBLES, ESTADOS, ESTADO_TEXTO, TRANSMISIONES,
@@ -27,12 +28,15 @@ export async function ingresar(_prev: { error?: string } | undefined, form: Form
     return { error: "Demasiados intentos. Esperá 15 minutos y probá de nuevo." };
   }
 
+  const usuario = String(form.get("usuario") ?? "").trim().toLowerCase();
   const pass = String(form.get("password") ?? "");
-  if (!iguales(pass, process.env.ADMIN_PASSWORD!)) {
+  const usuarioOk = iguales(usuario, (process.env.ADMIN_USER || "admin").trim().toLowerCase());
+  const passOk = iguales(pass, process.env.ADMIN_PASSWORD!);
+  if (!usuarioOk || !passOk) {
     const actual = reg && Date.now() - reg.desde < 15 * 60_000 ? reg : { n: 0, desde: Date.now() };
     intentos.set(ip, { n: actual.n + 1, desde: actual.desde });
     await new Promise((r) => setTimeout(r, 800));
-    return { error: "La contraseña no es correcta. Revisá mayúsculas y minúsculas." };
+    return { error: "El usuario o la contraseña no son correctos. Revisá mayúsculas y minúsculas." };
   }
 
   intentos.delete(ip);
@@ -43,12 +47,13 @@ export async function ingresar(_prev: { error?: string } | undefined, form: Form
     path: "/",
     maxAge: DURACION_SESION_SEG,
   });
-  redirect("/admin");
+  const volver = String(form.get("volver") ?? "");
+  redirect(volver.startsWith("/admin") ? volver : "/admin");
 }
 
 export async function salir() {
   (await cookies()).delete(COOKIE_SESION);
-  redirect("/admin/ingresar");
+  redirect("/ingresar?agencia=1");
 }
 
 async function verificarSesion() {
@@ -172,13 +177,24 @@ export async function guardarAuto(
   }
 }
 
-export async function cambiarEstadoAuto(id: string, estado: Estado, precioVenta?: number): Promise<Resultado> {
+export type Comprador = { nombre: string; email: string; telefono: string; aceptaMails: boolean };
+
+export async function cambiarEstadoAuto(id: string, estado: Estado, precioVenta?: number, comprador?: Comprador): Promise<Resultado> {
   try {
     await verificarSesion();
     if (!ESTADOS.includes(estado)) return { ok: false, error: "Estado no válido." };
     if (estado === "vendido" && !(entero(precioVenta) > 0)) return { ok: false, error: "Escribí a cuánto lo vendiste." };
+    const emailComprador = comprador ? normalizarEmail(texto(comprador.email, 120)) : "";
+    if (emailComprador && !emailValido(emailComprador)) return { ok: false, error: "Revisá el email del comprador." };
     const auto = await cambiarEstado(id, estado);
     await registrarVenta(id, estado === "vendido" ? entero(precioVenta) : null);
+    if (estado === "vendido" && comprador && emailComprador) {
+      await registrarCompra(
+        emailComprador,
+        { nombre: texto(comprador.nombre, 80), telefono: texto(comprador.telefono, 40), ciudad: "", aceptaMails: comprador.aceptaMails === true },
+        { autoId: id, titulo: `${auto.marca} ${auto.modelo} ${auto.anio}`, fecha: new Date().toISOString() },
+      );
+    }
     const t = `${auto.marca} ${auto.modelo} ${auto.anio}`;
     const mensajes: Record<Estado, string> = {
       publicado: `Listo, el ${t} está a la venta en la página.`,

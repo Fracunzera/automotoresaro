@@ -102,32 +102,33 @@ function descifrar(json: string): string {
   return Buffer.concat([d.update(Buffer.from(datos, "base64")), d.final()]).toString("utf8");
 }
 
-export async function leerPrivado<T>(): Promise<T | null> {
+/** Lee un archivo privado ("negocio", "clientes", "mails"...). */
+export async function leerPrivado<T>(nombre = "negocio"): Promise<T | null> {
   if (usaNube()) {
-    const { blobs } = await list({ prefix: "privado/negocio-", limit: 1000 });
+    const { blobs } = await list({ prefix: `privado/${nombre}-`, limit: 1000 });
     if (blobs.length === 0) return null;
     const ultima = blobs.sort((a, b) => +new Date(b.uploadedAt) - +new Date(a.uploadedAt))[0];
     const res = await fetch(ultima.url, { cache: "no-store" });
-    if (!res.ok) throw new Error(`No se pudieron leer los datos del negocio (${res.status})`);
+    if (!res.ok) throw new Error(`No se pudieron leer los datos privados (${res.status})`);
     return JSON.parse(descifrar(await res.text())) as T;
   }
   try {
-    return JSON.parse(await readFile(path.join(carpetaDatos(), "negocio.json"), "utf8")) as T;
+    return JSON.parse(await readFile(path.join(carpetaDatos(), `${nombre}.json`), "utf8")) as T;
   } catch (e) {
     if ((e as NodeJS.ErrnoException).code === "ENOENT") return null;
     throw e;
   }
 }
 
-export async function guardarPrivado(datos: unknown): Promise<void> {
+export async function guardarPrivado(datos: unknown, nombre = "negocio"): Promise<void> {
   const json = JSON.stringify(datos, null, 2);
   if (usaNube()) {
-    await put(`privado/negocio-${Date.now()}.json`, cifrar(json), {
+    await put(`privado/${nombre}-${Date.now()}.json`, cifrar(json), {
       access: "public",
       contentType: "application/octet-stream",
       addRandomSuffix: true,
     });
-    const { blobs } = await list({ prefix: "privado/negocio-", limit: 1000 });
+    const { blobs } = await list({ prefix: `privado/${nombre}-`, limit: 1000 });
     const viejas = blobs
       .sort((a, b) => +new Date(b.uploadedAt) - +new Date(a.uploadedAt))
       .slice(COPIAS_A_GUARDAR)
@@ -138,11 +139,11 @@ export async function guardarPrivado(datos: unknown): Promise<void> {
   const dir = carpetaDatos();
   const respaldos = path.join(dir, "respaldos");
   await mkdir(respaldos, { recursive: true });
-  const tmp = path.join(dir, `negocio.${randomUUID()}.tmp`);
+  const tmp = path.join(dir, `${nombre}.${randomUUID()}.tmp`);
   await writeFile(tmp, json);
-  await rename(tmp, path.join(dir, "negocio.json"));
-  await writeFile(path.join(respaldos, `negocio-${Date.now()}.json`), json);
-  const archivos = (await readdir(respaldos)).filter((f) => f.startsWith("negocio-")).sort().reverse();
+  await rename(tmp, path.join(dir, `${nombre}.json`));
+  await writeFile(path.join(respaldos, `${nombre}-${Date.now()}.json`), json);
+  const archivos = (await readdir(respaldos)).filter((f) => f.startsWith(`${nombre}-`)).sort().reverse();
   await Promise.all(archivos.slice(COPIAS_A_GUARDAR).map((f) => unlink(path.join(respaldos, f))));
 }
 

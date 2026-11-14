@@ -3,6 +3,7 @@ import type { Auto } from "@/lib/tipos";
 import type { Financiacion } from "@/lib/negocio-tipos";
 import { site } from "@/config/site";
 import { Icon } from "./Icon";
+import { BotonFavorito } from "./cuenta/ClienteContext";
 import { cuotaMensual, formatKm, formatNumero } from "@/lib/utils";
 import { CarImage } from "./CarImage";
 
@@ -36,6 +37,10 @@ export function CarCard({ auto, fin }: { auto: Auto; fin: Financiacion }) {
     >
       <div className="relative">
         <CarImage auto={auto} className={`aspect-[4/3] ${auto.estado === "reservado" ? "opacity-70" : ""}`} />
+        <BotonFavorito
+          autoId={auto.id}
+          className="absolute right-3 top-3 grid size-10 place-items-center rounded-full bg-white/90 text-tinta shadow-sm transition-transform hover:scale-110"
+        />
         {tag && (
           <span className={`absolute bottom-3 left-3 rounded-sm px-2 py-1 text-xs font-semibold shadow-sm ${tag.clase}`}>
             {tag.texto}
