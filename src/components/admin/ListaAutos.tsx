@@ -3,13 +3,14 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { borrarAutoAccion, cambiarEstadoAuto, type Comprador } from "@/app/admin/acciones";
+import { borrarAutoAccion, cambiarEstadoAuto, retirarAuto, type Comprador } from "@/app/admin/acciones";
+import { MOTIVO_RETIRO_TEXTO, type MotivoRetiro } from "@/lib/negocio-tipos";
 import type { Auto, Estado } from "@/lib/tipos";
 import { ESTADO_TEXTO } from "@/lib/tipos";
 import { formatKm, formatNumero } from "@/lib/utils";
 import { CarImage } from "../CarImage";
 import { Confirmar } from "./Confirmar";
-import { CampoPesos, Casilla } from "./Campos";
+import { CampoPesos, Casilla, Opciones } from "./Campos";
 
 export type FilaAuto = {
   auto: Auto;
@@ -19,6 +20,10 @@ export type FilaAuto = {
   alDueno: number | null;
   precioVenta: number | null;
   interesados: number;
+  consignacion: boolean;
+  venceEn: number | null;
+  retiro: { texto: string; cobrado: number } | null;
+  sugerido: Record<MotivoRetiro, number>;
 };
 
 const pesos = (n: number) => `$ ${formatNumero(n)}`;
@@ -28,6 +33,7 @@ const COLOR_ESTADO: Record<Estado, string> = {
   reservado: "bg-[#fff1cc] text-[#7a5300]",
   vendido: "bg-stone-200 text-stone-700",
   oculto: "bg-stone-200 text-stone-700",
+  retirado: "bg-stone-200 text-stone-700",
 };
 
 export function ListaAutos({ filas }: { filas: FilaAuto[] }) {
@@ -38,6 +44,9 @@ export function ListaAutos({ filas }: { filas: FilaAuto[] }) {
   const [precioVenta, setPrecioVenta] = useState(0);
   const [comprador, setComprador] = useState<Comprador>({ nombre: "", email: "", telefono: "", aceptaMails: false });
   const [borrando, setBorrando] = useState<Auto | null>(null);
+  const [retirando, setRetirando] = useState<FilaAuto | null>(null);
+  const [motivo, setMotivo] = useState<MotivoRetiro | "">("");
+  const [cobrado, setCobrado] = useState(0);
 
   const titulo = (a: Auto) => `${a.marca} ${a.modelo} ${a.anio}`;
 
@@ -60,7 +69,7 @@ export function ListaAutos({ filas }: { filas: FilaAuto[] }) {
       {error && <p role="alert" className="mt-5 rounded-lg bg-rojo-claro p-4 text-lg font-semibold text-rojo-oscuro">{error}</p>}
 
       <ul className="mt-5 space-y-4">
-        {filas.map(({ auto: a, tipo, dueno, ganancia, alDueno, precioVenta: vendidoA, interesados }) => (
+        {filas.map((fila) => { const { auto: a, tipo, dueno, ganancia, alDueno, precioVenta: vendidoA, interesados, venceEn, retiro, consignacion } = fila; return (
           <li key={a.id} className="tarjeta-g overflow-hidden">
             <div className="flex gap-4 p-4">
               <Link href={`/admin/autos/${a.id}`} className="w-28 shrink-0 sm:w-40">
@@ -98,6 +107,14 @@ export function ListaAutos({ filas }: { filas: FilaAuto[] }) {
               ) : (
                 <p className="text-stone-600">Sin datos de compra o comisión.</p>
               )}
+              {venceEn !== null && (
+                <p className={venceEn <= 7 ? "font-semibold text-rojo-oscuro" : "text-stone-600"}>
+                  {venceEn < 0 ? `El acuerdo venció hace ${-venceEn} día${venceEn === -1 ? "" : "s"}` : venceEn === 0 ? "El acuerdo vence hoy" : `El acuerdo vence en ${venceEn} día${venceEn === 1 ? "" : "s"}`}
+                </p>
+              )}
+              {retiro && (
+                <p>{retiro.texto}{retiro.cobrado > 0 && <> · cobraste <b>{pesos(retiro.cobrado)}</b></>}</p>
+              )}
             </div>
 
             {/* Acciones */}
@@ -121,12 +138,24 @@ export function ListaAutos({ filas }: { filas: FilaAuto[] }) {
               {(a.estado === "publicado" || a.estado === "reservado") && (
                 <button disabled={cargando} onClick={() => cambiar(a, "oculto")} className="btn-g border-2 border-stone-300 bg-white hover:border-tinta">Ocultar</button>
               )}
-              {(a.estado === "oculto" || a.estado === "vendido") && (
+              {(a.estado === "oculto" || a.estado === "vendido" || a.estado === "retirado") && (
                 <button disabled={cargando} onClick={() => cambiar(a, "publicado")} className="btn-g bg-tinta text-white hover:bg-tinta-2">
-                  {a.estado === "vendido" ? "Volver a poner en venta" : "Publicar"}
+                  {a.estado === "oculto" ? "Publicar" : "Volver a poner en venta"}
                 </button>
               )}
-              {(a.estado === "oculto" || a.estado === "vendido") && (
+              {consignacion && a.estado !== "vendido" && a.estado !== "retirado" && (
+                <button
+                  disabled={cargando}
+                  onClick={() => { setMotivo(""); setCobrado(0); setRetirando(fila); }}
+                  className="btn-g border-2 border-stone-300 bg-white hover:border-tinta"
+                >
+                  El dueño lo retiró
+                </button>
+              )}
+              {consignacion && (
+                <a href={`/admin/contrato/${a.id}`} target="_blank" className="btn-g border-2 border-stone-300 bg-white hover:border-tinta">Contrato</a>
+              )}
+              {(a.estado === "oculto" || a.estado === "vendido" || a.estado === "retirado") && (
                 <button disabled={cargando} onClick={() => setBorrando(a)} className="btn-g border-2 border-stone-300 bg-white text-rojo-oscuro hover:border-rojo">Borrar</button>
               )}
               {(a.estado === "publicado" || a.estado === "reservado") && (
@@ -134,7 +163,7 @@ export function ListaAutos({ filas }: { filas: FilaAuto[] }) {
               )}
             </div>
           </li>
-        ))}
+        ); })}
       </ul>
 
       {vendiendo && (
@@ -170,6 +199,41 @@ export function ListaAutos({ filas }: { filas: FilaAuto[] }) {
               <p className="text-base text-stone-600">Queda guardado en Clientes. Hace falta el email.</p>
             </div>
           </details>
+        </Confirmar>
+      )}
+
+      {retirando && (
+        <Confirmar
+          titulo={`El dueño se llevó el ${titulo(retirando.auto)}`}
+          texto="El auto deja de aparecer en la página. Contanos qué pasó:"
+          confirmar="Guardar"
+          cargando={cargando}
+          onCancelar={() => setRetirando(null)}
+          onConfirmar={() => {
+            if (!motivo) return setError("Elegí qué pasó con el auto.");
+            ejecutar(() => retirarAuto(retirando.auto.id, motivo, cobrado), () => setRetirando(null));
+          }}
+        >
+          <div className="mt-4 max-h-[55vh] space-y-5 overflow-y-auto">
+            <Opciones
+              label="¿Qué pasó?"
+              opciones={["antes", "vendioAfuera", "vencio"] as const}
+              textos={MOTIVO_RETIRO_TEXTO}
+              valor={motivo}
+              onChange={(m) => { setMotivo(m); setCobrado(retirando.sugerido[m]); setError(""); }}
+            />
+            {motivo && (
+              <div>
+                <CampoPesos id="cobrado" label="¿Cuánto le cobraste?" valor={cobrado} onChange={setCobrado} />
+                <p className="ayuda-g">
+                  {motivo === "antes" && "Sale del cargo por retiro anticipado del acuerdo. Si no le cobraste, poné 0."}
+                  {motivo === "vendioAfuera" && "Con exclusividad, le corresponde la comisión. Si no le cobraste, poné 0."}
+                  {motivo === "vencio" && "Si terminó el plazo, normalmente no se cobra nada."}
+                </p>
+              </div>
+            )}
+            {error && <p role="alert" className="text-lg font-semibold text-rojo-oscuro">{error}</p>}
+          </div>
         </Confirmar>
       )}
 

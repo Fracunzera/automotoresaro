@@ -18,6 +18,24 @@ export const MODO_COMISION_TEXTO: Record<ModoComision, string> = {
   neto: "Precio acordado para el dueño",
 };
 
+/** Papeles que se reciben al ingresar un auto en consignación. */
+export const PAPELES = [
+  "Título del automotor",
+  "Cédula verde",
+  "Informe de dominio",
+  "Verificación policial",
+  "Formulario 08 firmado",
+  "Libre deuda de patentes",
+  "Autorización para manejarlo (pruebas de manejo)",
+] as const;
+
+export type MotivoRetiro = "antes" | "vendioAfuera" | "vencio";
+export const MOTIVO_RETIRO_TEXTO: Record<MotivoRetiro, string> = {
+  antes: "Lo retiró antes de que termine el plazo",
+  vendioAfuera: "Lo vendió por su cuenta",
+  vencio: "Terminó el plazo sin venderse",
+};
+
 export interface NegocioAuto {
   /** propio: lo compró la agencia. consignacion: es de un cliente y se cobra comisión. */
   tipo: "propio" | "consignacion";
@@ -35,6 +53,25 @@ export interface NegocioAuto {
   precioVenta?: number;
   fechaVenta?: string;
   notas: string;
+
+  /** Patente (privada: no se muestra en la página). */
+  dominio: string;
+
+  /* ── Acuerdo de consignación ── */
+  duenoDni: string;
+  duenoDomicilio: string;
+  /** Fecha en que el auto entró a la agencia (AAAA-MM-DD). */
+  fechaIngreso: string;
+  /** Duración del acuerdo, en días. */
+  plazoDias: number;
+  /** Si lo vende por su cuenta mientras dura el acuerdo, igual paga la comisión. */
+  exclusividad: boolean;
+  /** Lo que paga si lo retira antes de que termine el plazo. */
+  cargoRetiro: number;
+  papeles: string[];
+
+  /** Se completa si el dueño lo retiró. */
+  retiro?: { motivo: MotivoRetiro; cobrado: number; fecha: string };
 }
 
 export interface Ajustes {
@@ -52,6 +89,14 @@ export interface Ajustes {
   };
   /** A partir de cuántos días en venta se avisa en el tablero. */
   diasAlerta: number;
+  /** Valores por defecto para los acuerdos de consignación. */
+  consignacion: {
+    plazoDias: number;
+    cargoRetiro: number;
+    exclusividad: boolean;
+    /** Cuántos días antes del vencimiento se avisa en el tablero. */
+    diasAvisoVencimiento: number;
+  };
 }
 
 export const AJUSTES_INICIALES: Ajustes = {
@@ -60,12 +105,19 @@ export const AJUSTES_INICIALES: Ajustes = {
   comisionMinima: 0,
   financiacion: { tna: 55, anticipoMinimo: 30, plazos: [12, 18, 24, 36, 48] },
   diasAlerta: 60,
+  consignacion: { plazoDias: 60, cargoRetiro: 0, exclusividad: true, diasAvisoVencimiento: 7 },
 };
 
 /** Financiación tal como la usa la página pública (tasas en fracción: 0.55 = 55%). */
 export type Financiacion = { tna: number; anticipoMinimo: number; plazos: number[] };
 
+export const hoyISO = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};
+
 export function negocioVacio(ajustes: Ajustes): NegocioAuto {
+  const c = { ...AJUSTES_INICIALES.consignacion, ...ajustes.consignacion };
   return {
     tipo: "propio",
     costo: 0,
@@ -75,7 +127,37 @@ export function negocioVacio(ajustes: Ajustes): NegocioAuto {
     comisionModo: ajustes.comisionModo,
     comisionValor: ajustes.comisionValor,
     notas: "",
+    dominio: "",
+    duenoDni: "",
+    duenoDomicilio: "",
+    fechaIngreso: hoyISO(),
+    plazoDias: c.plazoDias,
+    exclusividad: c.exclusividad,
+    cargoRetiro: c.cargoRetiro,
+    papeles: [],
   };
+}
+
+/** Completa los campos que no existían en datos guardados con versiones anteriores. */
+export const completarNegocio = (n: Partial<NegocioAuto> | undefined, ajustes: Ajustes): NegocioAuto => ({
+  ...negocioVacio(ajustes),
+  ...(n?.fechaIngreso ? {} : { fechaIngreso: "" }),
+  ...n,
+});
+
+/** Días que faltan para que venza el acuerdo de consignación (negativo si ya venció). null si no aplica. */
+export function diasParaVencer(n: NegocioAuto, hoy = new Date()): number | null {
+  if (n.tipo !== "consignacion" || !n.fechaIngreso || !(n.plazoDias > 0)) return null;
+  const [a, m, d] = n.fechaIngreso.split("-").map(Number);
+  const vence = new Date(a, m - 1, d + n.plazoDias);
+  const base = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
+  return Math.round((+vence - +base) / 86_400_000);
+}
+
+export function fechaVencimiento(n: NegocioAuto): Date | null {
+  if (!n.fechaIngreso || !(n.plazoDias > 0)) return null;
+  const [a, m, d] = n.fechaIngreso.split("-").map(Number);
+  return new Date(a, m - 1, d + n.plazoDias);
 }
 
 /**

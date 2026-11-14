@@ -4,8 +4,8 @@ import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { actualizarAuto, borrarAuto, borrarEjemplos, cambiarEstado, crearAuto } from "@/lib/autos";
 import { usaNube } from "@/lib/almacen";
-import { borrarNegocioAuto, guardarAjustes, guardarNegocioAuto, registrarVenta } from "@/lib/negocio";
-import type { Ajustes, ModoComision, NegocioAuto } from "@/lib/negocio-tipos";
+import { borrarNegocioAuto, guardarAjustes, guardarNegocioAuto, registrarRetiro, registrarVenta } from "@/lib/negocio";
+import { PAPELES, type Ajustes, type ModoComision, type MotivoRetiro, type NegocioAuto } from "@/lib/negocio-tipos";
 import { emailValido, normalizarEmail, registrarCompra } from "@/lib/clientes";
 import { COOKIE_SESION, DURACION_SESION_SEG, crearToken, iguales, passwordConfigurada, tokenValido } from "@/lib/sesion";
 import {
@@ -143,6 +143,14 @@ function validarNegocio(d: Record<string, unknown>): NegocioAuto {
     comisionModo: modo,
     comisionValor: modo === "porcentaje" ? Math.min(Math.max(valor, 0), 100) : pesos(valor),
     notas: texto(d.notas, 2000),
+    dominio: texto(d.dominio, 12).toUpperCase(),
+    duenoDni: texto(d.duenoDni, 20),
+    duenoDomicilio: texto(d.duenoDomicilio, 150),
+    fechaIngreso: /^\d{4}-\d{2}-\d{2}$/.test(String(d.fechaIngreso)) ? String(d.fechaIngreso) : "",
+    plazoDias: Math.min(Math.max(entero(d.plazoDias) || 0, 0), 730),
+    exclusividad: d.exclusividad === true,
+    cargoRetiro: pesos(d.cargoRetiro),
+    papeles: (Array.isArray(d.papeles) ? d.papeles : []).filter((p): p is string => (PAPELES as readonly string[]).includes(p as string)),
   };
 }
 
@@ -188,6 +196,7 @@ export async function cambiarEstadoAuto(id: string, estado: Estado, precioVenta?
     if (emailComprador && !emailValido(emailComprador)) return { ok: false, error: "Revisá el email del comprador." };
     const auto = await cambiarEstado(id, estado);
     await registrarVenta(id, estado === "vendido" ? entero(precioVenta) : null);
+    if (estado !== "retirado") await registrarRetiro(id, null);
     if (estado === "vendido" && comprador && emailComprador) {
       await registrarCompra(
         emailComprador,
@@ -201,8 +210,30 @@ export async function cambiarEstadoAuto(id: string, estado: Estado, precioVenta?
       reservado: `Listo, el ${t} figura como reservado.`,
       vendido: `¡Felicitaciones! El ${t} quedó como vendido y ya no aparece en la página.`,
       oculto: `Listo, el ${t} quedó oculto. No aparece en la página.`,
+      retirado: `Listo, el ${t} figura como retirado por el dueño.`,
     };
     return { ok: true, mensaje: mensajes[estado] ?? ESTADO_TEXTO[estado] };
+  } catch (e) {
+    return { ok: false, error: errorAmigable(e) };
+  }
+}
+
+const MOTIVOS: readonly MotivoRetiro[] = ["antes", "vendioAfuera", "vencio"];
+
+/** El dueño de un auto en consignación se lo llevó (lo retiró o lo vendió por su cuenta). */
+export async function retirarAuto(id: string, motivo: MotivoRetiro, cobrado: number): Promise<Resultado> {
+  try {
+    await verificarSesion();
+    if (!MOTIVOS.includes(motivo)) return { ok: false, error: "Elegí qué pasó con el auto." };
+    const monto = pesos(cobrado);
+    const auto = await cambiarEstado(id, "retirado");
+    await registrarVenta(id, null);
+    await registrarRetiro(id, { motivo, cobrado: monto });
+    const t = `${auto.marca} ${auto.modelo} ${auto.anio}`;
+    return {
+      ok: true,
+      mensaje: monto > 0 ? `Listo, el ${t} quedó como retirado y se sumaron $ ${monto.toLocaleString("es-AR")} cobrados.` : `Listo, el ${t} quedó como retirado por el dueño.`,
+    };
   } catch (e) {
     return { ok: false, error: errorAmigable(e) };
   }
@@ -245,6 +276,7 @@ export async function guardarAjustesAccion(a: Record<string, unknown>): Promise<
       .map(entero)
       .filter((p) => p >= 1 && p <= 120);
     const dias = entero(a.diasAlerta);
+    const cons = (a.consignacion ?? {}) as Record<string, unknown>;
 
     if (!modo) return { ok: false, error: "Elegí cómo cobrás la comisión." };
     if (!(valor >= 0) || (modo === "porcentaje" && valor > 100)) return { ok: false, error: "Revisá el valor de la comisión." };
@@ -258,6 +290,12 @@ export async function guardarAjustesAccion(a: Record<string, unknown>): Promise<
       comisionMinima: pesos(a.comisionMinima),
       financiacion: { tna, anticipoMinimo: anticipo, plazos: Array.from(new Set(plazos)).sort((x, y) => x - y) },
       diasAlerta: dias >= 1 && dias <= 365 ? dias : 60,
+      consignacion: {
+        plazoDias: Math.min(Math.max(entero(cons.plazoDias) || 60, 1), 730),
+        cargoRetiro: pesos(cons.cargoRetiro),
+        exclusividad: cons.exclusividad !== false,
+        diasAvisoVencimiento: Math.min(Math.max(entero(cons.diasAvisoVencimiento) || 7, 1), 60),
+      },
     };
     await guardarAjustes(ajustes);
     return { ok: true, mensaje: "Listo, se guardaron los ajustes. La página ya usa los valores nuevos." };

@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, useTransition, type ReactNode } from "react";
 import { borrarAutoAccion, guardarAuto } from "@/app/admin/acciones";
 import {
-  MODO_COMISION_TEXTO, calcularGanancia, paraElDueno,
+  MODO_COMISION_TEXTO, PAPELES, calcularGanancia, fechaVencimiento, paraElDueno,
   type Ajustes, type ModoComision, type NegocioAuto,
 } from "@/lib/negocio-tipos";
 import {
@@ -175,6 +175,17 @@ export function AutoForm({ auto, negocioInicial, ajustes }: { auto?: Auto; negoc
           valor={neg.tipo}
           onChange={(v) => setN("tipo", v)}
         />
+        <div>
+          <label htmlFor="dominio" className="etiqueta-g">Patente</label>
+          <input
+            id="dominio"
+            value={neg.dominio}
+            onChange={(e) => setN("dominio", e.target.value.toUpperCase().replace(/[^A-Z0-9 ]/g, ""))}
+            className="campo-g max-w-60 uppercase"
+            placeholder="AB 123 CD"
+            autoComplete="off"
+          />
+        </div>
 
         {neg.tipo === "propio" ? (
           <div className="grid gap-6 sm:grid-cols-2">
@@ -185,12 +196,20 @@ export function AutoForm({ auto, negocioInicial, ajustes }: { auto?: Auto; negoc
           <>
             <div className="grid gap-6 sm:grid-cols-2">
               <div>
-                <label htmlFor="dueno" className="etiqueta-g">Nombre del dueño</label>
+                <label htmlFor="dueno" className="etiqueta-g">Nombre y apellido del dueño</label>
                 <input id="dueno" value={neg.duenoNombre} onChange={(e) => setN("duenoNombre", e.target.value)} className="campo-g" autoComplete="off" />
               </div>
               <div>
                 <label htmlFor="tel-dueno" className="etiqueta-g">Teléfono del dueño</label>
                 <input id="tel-dueno" type="tel" value={neg.duenoTelefono} onChange={(e) => setN("duenoTelefono", e.target.value)} className="campo-g" autoComplete="off" />
+              </div>
+              <div>
+                <label htmlFor="dni-dueno" className="etiqueta-g">DNI del dueño</label>
+                <input id="dni-dueno" inputMode="numeric" value={neg.duenoDni} onChange={(e) => setN("duenoDni", e.target.value)} className="campo-g" autoComplete="off" />
+              </div>
+              <div>
+                <label htmlFor="dom-dueno" className="etiqueta-g">Domicilio del dueño</label>
+                <input id="dom-dueno" value={neg.duenoDomicilio} onChange={(e) => setN("duenoDomicilio", e.target.value)} className="campo-g" autoComplete="off" />
               </div>
             </div>
             <Opciones
@@ -210,6 +229,58 @@ export function AutoForm({ auto, negocioInicial, ajustes }: { auto?: Auto; negoc
             {ajustes.comisionMinima > 0 && neg.comisionModo !== "neto" && (
               <p className="text-lg text-stone-600">Se aplica tu comisión mínima de {pesos(ajustes.comisionMinima)}.</p>
             )}
+
+            <div className="space-y-6 rounded-md border-2 border-linea p-4 sm:p-5">
+              <div>
+                <p className="text-xl font-bold">Acuerdo con el dueño</p>
+                <p className="text-lg text-stone-600">Esto va en el contrato para imprimir y firmar.</p>
+              </div>
+              <div className="grid gap-6 sm:grid-cols-2">
+                <div>
+                  <label htmlFor="ingreso" className="etiqueta-g">Fecha en que entró el auto</label>
+                  <input id="ingreso" type="date" value={neg.fechaIngreso} onChange={(e) => setN("fechaIngreso", e.target.value)} className="campo-g" />
+                </div>
+                <CampoNumero id="plazo" label="Duración del acuerdo" valor={neg.plazoDias} onChange={(v) => setN("plazoDias", v)} sufijo="días" />
+              </div>
+              {(() => {
+                const v = fechaVencimiento(neg);
+                return v ? <p className="-mt-2 text-lg text-stone-600">Vence el <b className="text-tinta">{v.toLocaleDateString("es-AR", { day: "numeric", month: "long", year: "numeric" })}</b>.</p> : null;
+              })()}
+              <Casilla
+                label="Exclusividad"
+                ayuda="Si lo vende por su cuenta mientras dura el acuerdo, igual paga la comisión."
+                valor={neg.exclusividad}
+                onChange={(v) => setN("exclusividad", v)}
+              />
+              <CampoPesos
+                id="cargo-retiro"
+                label="Cargo si lo retira antes de tiempo"
+                valor={neg.cargoRetiro}
+                onChange={(v) => setN("cargoRetiro", v)}
+                ayuda="Gastos de preparación, lavado y publicidad. 0 = sin cargo."
+              />
+              <fieldset>
+                <legend className="etiqueta-g">Papeles que te dejó</legend>
+                <div className="space-y-2">
+                  {PAPELES.map((p) => (
+                    <Casilla
+                      key={p}
+                      label={p}
+                      valor={neg.papeles.includes(p)}
+                      onChange={(v) => setN("papeles", v ? [...neg.papeles, p] : neg.papeles.filter((x) => x !== p))}
+                    />
+                  ))}
+                </div>
+              </fieldset>
+              {auto ? (
+                <a href={`/admin/contrato/${auto.id}`} target="_blank" className="btn-g w-full border-2 border-tinta bg-white hover:bg-papel">
+                  Imprimir contrato
+                </a>
+              ) : (
+                <p className="text-lg text-stone-600">Cuando guardes el auto vas a poder imprimir el contrato desde Mis autos.</p>
+              )}
+              {auto && cambios && <p className="-mt-3 text-base text-stone-500">Guardá los cambios antes de imprimir, así el contrato sale actualizado.</p>}
+            </div>
           </>
         )}
 

@@ -14,8 +14,9 @@ export type Carroceria = (typeof CARROCERIAS)[number];
  * - reservado: se ve en la página con la etiqueta "Reservado"
  * - vendido:   no se ve en la página (queda guardado en el panel)
  * - oculto:    no se ve en la página (borrador o pausado)
+ * - retirado:  auto de un cliente que el dueño se llevó (lo retiró o lo vendió por su cuenta)
  */
-export const ESTADOS = ["publicado", "reservado", "vendido", "oculto"] as const;
+export const ESTADOS = ["publicado", "reservado", "vendido", "oculto", "retirado"] as const;
 export type Estado = (typeof ESTADOS)[number];
 
 export const ESTADO_TEXTO: Record<Estado, string> = {
@@ -23,6 +24,7 @@ export const ESTADO_TEXTO: Record<Estado, string> = {
   reservado: "Reservado",
   vendido: "Vendido",
   oculto: "Oculto",
+  retirado: "Retirado por el dueño",
 };
 
 export interface Auto {

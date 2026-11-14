@@ -83,3 +83,9 @@ summary::-webkit-details-marker {
 @utility tarjeta-g {
   @apply rounded-lg border-2 border-linea bg-white;
 }
+
+@media print {
+  @page {
+    margin: 2cm;
+  }
+}

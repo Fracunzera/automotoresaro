@@ -2,7 +2,7 @@ import Link from "next/link";
 import { getTodos } from "@/lib/autos";
 import { leerNegocio } from "@/lib/negocio";
 import { leerClientes } from "@/lib/clientes";
-import { MODO_COMISION_TEXTO, calcularGanancia } from "@/lib/negocio-tipos";
+import { MODO_COMISION_TEXTO, calcularGanancia, completarNegocio, diasParaVencer } from "@/lib/negocio-tipos";
 import { formatNumero } from "@/lib/utils";
 import { BotonBorrarEjemplos } from "@/components/admin/BotonBorrarEjemplos";
 
@@ -55,7 +55,14 @@ export default async function Tablero() {
   };
   const esteMes = delMes(0);
   const mesPasado = delMes(1);
-  const gananciaMes = esteMes.reduce((s, v) => s + (v.ganancia ?? 0), 0);
+  const retirosMes = autos.filter((a) => {
+    const r = a.estado === "retirado" ? n(a.id)?.retiro : undefined;
+    if (!r) return false;
+    const f = new Date(r.fecha);
+    return f.getFullYear() === hoy.getFullYear() && f.getMonth() === hoy.getMonth();
+  });
+  const cobradoRetiros = retirosMes.reduce((s, a) => s + (n(a.id)?.retiro?.cobrado ?? 0), 0);
+  const gananciaMes = esteMes.reduce((s, v) => s + (v.ganancia ?? 0), 0) + cobradoRetiros;
   const facturadoMes = esteMes.reduce((s, v) => s + v.precio, 0);
 
   // Alertas
@@ -63,6 +70,11 @@ export default async function Tablero() {
   const viejos = stock.filter((a) => !a.ejemplo && dias(a.creado) >= ajustes.diasAlerta);
   const sinFotos = stock.filter((a) => a.fotos.length === 0 && !a.ejemplo);
   const hayEjemplos = autos.some((a) => a.ejemplo);
+  const porVencer = autos
+    .filter((a) => (a.estado === "publicado" || a.estado === "reservado" || a.estado === "oculto") && n(a.id)?.tipo === "consignacion")
+    .map((a) => ({ a, dias: diasParaVencer(completarNegocio(n(a.id), ajustes)) }))
+    .filter((x): x is { a: (typeof autos)[number]; dias: number } => x.dias !== null && x.dias <= ajustes.consignacion.diasAvisoVencimiento)
+    .sort((x, y) => x.dias - y.dias);
 
   const comisionTexto =
     ajustes.comisionModo === "porcentaje"
@@ -123,7 +135,7 @@ export default async function Tablero() {
         <div className="mt-3 grid gap-3 sm:grid-cols-3">
           <Dato titulo="Autos vendidos" valor={String(esteMes.length)} detalle={`El mes pasado: ${mesPasado.length}`} />
           <Dato titulo="Total vendido" valor={pesos(facturadoMes)} />
-          <Dato titulo="Ganancia del mes" valor={pesos(gananciaMes)} />
+          <Dato titulo="Ganancia del mes" valor={pesos(gananciaMes)} detalle={cobradoRetiros > 0 ? `Incluye ${pesos(cobradoRetiros)} cobrados por retiros` : undefined} />
         </div>
         {vendidos.length > 0 ? (
           <div className="tarjeta-g mt-3 divide-y-2 divide-linea">
@@ -180,10 +192,20 @@ export default async function Tablero() {
       </section>
 
       {/* Avisos */}
-      {(viejos.length > 0 || sinFotos.length > 0 || sinDatos.filter((a) => !a.ejemplo).length > 0) && (
+      {(porVencer.length > 0 || viejos.length > 0 || sinFotos.length > 0 || sinDatos.filter((a) => !a.ejemplo).length > 0) && (
         <section>
           <h2 className="text-xl font-bold">Para revisar</h2>
           <div className="mt-3 space-y-3">
+            {porVencer.length > 0 && (
+              <Aviso
+                titulo={`${porVencer.length === 1 ? "Un acuerdo de consignación vence" : `${porVencer.length} acuerdos de consignación vencen`} pronto`}
+                texto="Hablá con el dueño para renovarlo, bajar el precio o que lo retire."
+                autos={porVencer.map(({ a, dias }) => ({
+                  id: a.id,
+                  texto: `${a.marca} ${a.modelo} ${a.anio}${n(a.id)?.duenoNombre ? ` (${n(a.id)!.duenoNombre})` : ""} · ${dias < 0 ? `venció hace ${-dias} días` : dias === 0 ? "vence hoy" : `vence en ${dias} días`}`,
+                }))}
+              />
+            )}
             {viejos.length > 0 && (
               <Aviso
                 titulo={`${viejos.length} auto${viejos.length > 1 ? "s llevan" : " lleva"} más de ${ajustes.diasAlerta} días a la venta`}

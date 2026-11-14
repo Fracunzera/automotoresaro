@@ -2,7 +2,7 @@ import Link from "next/link";
 import { getTodos } from "@/lib/autos";
 import { leerNegocio } from "@/lib/negocio";
 import { leerClientes } from "@/lib/clientes";
-import { calcularGanancia, paraElDueno } from "@/lib/negocio-tipos";
+import { MOTIVO_RETIRO_TEXTO, calcularGanancia, completarNegocio, diasParaVencer, paraElDueno } from "@/lib/negocio-tipos";
 import { ESTADOS, ESTADO_TEXTO, type Estado } from "@/lib/tipos";
 import { ListaAutos, type FilaAuto } from "@/components/admin/ListaAutos";
 
@@ -20,7 +20,8 @@ export default async function MisAutos({ searchParams }: { searchParams: SP }) {
   const lista = autos.filter((a) => (ver === "stock" ? a.estado === "publicado" || a.estado === "reservado" : a.estado === ver));
 
   const filas: FilaAuto[] = lista.map((a) => {
-    const n = negocio.autos[a.id];
+    const n = negocio.autos[a.id] ? completarNegocio(negocio.autos[a.id], negocio.ajustes) : undefined;
+    const comisionAlPrecio = n?.tipo === "consignacion" ? calcularGanancia({ ...n, comisionModo: n.comisionModo === "neto" ? "porcentaje" : n.comisionModo, comisionValor: n.comisionModo === "neto" ? negocio.ajustes.comisionValor : n.comisionValor }, a.precio, negocio.ajustes.comisionMinima) : null;
     const precio = a.estado === "vendido" ? (n?.precioVenta ?? a.precio) : a.precio;
     return {
       auto: a,
@@ -30,12 +31,21 @@ export default async function MisAutos({ searchParams }: { searchParams: SP }) {
       alDueno: n ? paraElDueno(n, precio, negocio.ajustes.comisionMinima) : null,
       precioVenta: n?.precioVenta ?? null,
       interesados: clientes.filter((c) => c.favoritos.includes(a.id)).length,
+      consignacion: n?.tipo === "consignacion",
+      venceEn: n && (a.estado === "publicado" || a.estado === "reservado" || a.estado === "oculto") ? diasParaVencer(n) : null,
+      retiro: n?.retiro ? { texto: MOTIVO_RETIRO_TEXTO[n.retiro.motivo], cobrado: n.retiro.cobrado } : null,
+      sugerido: {
+        antes: n?.cargoRetiro ?? 0,
+        vendioAfuera: n?.exclusividad ? Math.round(comisionAlPrecio ?? 0) : 0,
+        vencio: 0,
+      },
     };
   });
 
   const pestañas: { id: Estado | "stock"; label: string; n: number }[] = [
     { id: "stock", label: "En venta", n: cuenta.publicado + cuenta.reservado },
     { id: "vendido", label: ESTADO_TEXTO.vendido + "s", n: cuenta.vendido },
+    { id: "retirado", label: "Retirados", n: cuenta.retirado },
     { id: "oculto", label: ESTADO_TEXTO.oculto + "s", n: cuenta.oculto },
   ];
 
@@ -52,7 +62,7 @@ export default async function MisAutos({ searchParams }: { searchParams: SP }) {
         </p>
       )}
 
-      <nav className="mt-6 grid grid-cols-3 gap-2">
+      <nav className="mt-6 grid grid-cols-2 gap-2 sm:grid-cols-4">
         {pestañas.map((p) => (
           <Link
             key={p.id}

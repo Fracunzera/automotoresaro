@@ -29,6 +29,12 @@ export const site = {
   horarios: "Lunes a viernes 9 a 19 h · Sábados 9 a 13 h",
   instagram: "https://instagram.com/", // TODO
 
+  // Datos que aparecen en el contrato de consignación
+  legal: {
+    titular: "", // TODO: nombre y apellido (o razón social) del titular de la agencia
+    cuit: "", // TODO
+  },
+
   // La financiación (tasa, anticipo, cuotas) y las comisiones se cambian desde el panel: /admin/ajustes
 
   // Beneficios que se muestran en la home y en cada ficha.

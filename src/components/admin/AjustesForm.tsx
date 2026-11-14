@@ -3,9 +3,9 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { guardarAjustesAccion } from "@/app/admin/acciones";
-import { MODO_COMISION_TEXTO, calcularGanancia, type Ajustes, type ModoComision } from "@/lib/negocio-tipos";
+import { MODO_COMISION_TEXTO, calcularGanancia, negocioVacio, type Ajustes, type ModoComision } from "@/lib/negocio-tipos";
 import { cuotaMensual, formatNumero } from "@/lib/utils";
-import { CampoNumero, CampoPesos, Opciones } from "./Campos";
+import { Casilla, CampoNumero, CampoPesos, Opciones } from "./Campos";
 
 const pesos = (n: number) => `$ ${formatNumero(n)}`;
 const PLAZOS_POSIBLES = [6, 12, 18, 24, 36, 48, 60];
@@ -17,10 +17,11 @@ export function AjustesForm({ inicial }: { inicial: Ajustes }) {
   const [tnaTexto, setTnaTexto] = useState(String(inicial.financiacion.tna));
   const [msg, setMsg] = useState<{ ok: boolean; texto: string } | null>(null);
   const [guardando, start] = useTransition();
+  const setCons = (k: keyof Ajustes["consignacion"], v: number | boolean) => setA((p) => ({ ...p, consignacion: { ...p.consignacion, [k]: v } }));
   const setFin = (k: keyof Ajustes["financiacion"], v: number | number[]) => setA((p) => ({ ...p, financiacion: { ...p.financiacion, [k]: v } }));
 
   const comisionEjemplo = calcularGanancia(
-    { tipo: "consignacion", costo: 0, gastos: 0, duenoNombre: "", duenoTelefono: "", comisionModo: a.comisionModo, comisionValor: a.comisionValor, notas: "" },
+    { ...negocioVacio(a), tipo: "consignacion" },
     EJEMPLO,
     a.comisionMinima,
   );
@@ -86,6 +87,39 @@ export function AjustesForm({ inicial }: { inicial: Ajustes }) {
             Ejemplo: en un auto de {pesos(EJEMPLO)} ganás <b>{pesos(comisionEjemplo)}</b> y al dueño le quedan {pesos(EJEMPLO - comisionEjemplo)}.
           </p>
         )}
+      </section>
+
+      <section id="acuerdo" className="tarjeta-g scroll-mt-32 space-y-6 p-5 sm:p-7">
+        <div>
+          <h2 className="text-2xl font-bold">Acuerdo con el dueño (consignación)</h2>
+          <p className="mt-1 text-lg text-stone-600">
+            Valores que se proponen al cargar un auto de un cliente y que aparecen en el contrato para imprimir.
+          </p>
+        </div>
+        <div className="grid gap-6 sm:grid-cols-2">
+          <CampoNumero id="plazo" label="Duración del acuerdo" valor={a.consignacion.plazoDias} onChange={(v) => setCons("plazoDias", v)} sufijo="días" />
+          <CampoPesos
+            id="cargo"
+            label="Cargo si lo retira antes"
+            valor={a.consignacion.cargoRetiro}
+            onChange={(v) => setCons("cargoRetiro", v)}
+            ayuda="Para cubrir preparación, lavado y publicidad. 0 = sin cargo."
+          />
+        </div>
+        <Casilla
+          label="Exclusividad"
+          ayuda="Si el dueño lo vende por su cuenta mientras dura el acuerdo, igual paga la comisión."
+          valor={a.consignacion.exclusividad}
+          onChange={(v) => setCons("exclusividad", v)}
+        />
+        <CampoNumero
+          id="aviso"
+          label="Avisarme antes de que venza un acuerdo"
+          valor={a.consignacion.diasAvisoVencimiento}
+          onChange={(v) => setCons("diasAvisoVencimiento", v)}
+          sufijo="días"
+          ayuda="Aparece en el Inicio para renovar el acuerdo o hablar con el dueño."
+        />
       </section>
 
       <section id="financiacion" className="tarjeta-g scroll-mt-32 space-y-6 p-5 sm:p-7">

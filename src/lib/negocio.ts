@@ -4,7 +4,7 @@
 import { revalidatePath, revalidateTag, unstable_cache } from "next/cache";
 import { guardarPrivado, leerPrivado } from "./almacen";
 import { conCandado } from "./candado";
-import { AJUSTES_INICIALES, type Ajustes, type Financiacion, type NegocioAuto } from "./negocio-tipos";
+import { AJUSTES_INICIALES, completarNegocio, type Ajustes, type Financiacion, type MotivoRetiro, type NegocioAuto } from "./negocio-tipos";
 
 interface DatosNegocio {
   ajustes: Ajustes;
@@ -16,7 +16,12 @@ const TAG = "negocio";
 export async function leerNegocio(): Promise<DatosNegocio> {
   const d = await leerPrivado<DatosNegocio>();
   return {
-    ajustes: { ...AJUSTES_INICIALES, ...d?.ajustes, financiacion: { ...AJUSTES_INICIALES.financiacion, ...d?.ajustes?.financiacion } },
+    ajustes: {
+      ...AJUSTES_INICIALES,
+      ...d?.ajustes,
+      financiacion: { ...AJUSTES_INICIALES.financiacion, ...d?.ajustes?.financiacion },
+      consignacion: { ...AJUSTES_INICIALES.consignacion, ...d?.ajustes?.consignacion },
+    },
     autos: d?.autos ?? {},
   };
 }
@@ -55,10 +60,25 @@ export function registrarVenta(id: string, precioVenta: number | null) {
       delete actual.fechaVenta;
     } else {
       d.autos[id] = {
-        ...(actual ?? { tipo: "propio", costo: 0, gastos: 0, duenoNombre: "", duenoTelefono: "", comisionModo: d.ajustes.comisionModo, comisionValor: d.ajustes.comisionValor, notas: "" }),
+        ...completarNegocio(actual, d.ajustes),
         precioVenta,
         fechaVenta: new Date().toISOString(),
       };
+    }
+    await guardar(d);
+  });
+}
+
+/** Registra (o borra, con null) que el dueño se llevó el auto y cuánto se le cobró. */
+export function registrarRetiro(id: string, retiro: { motivo: MotivoRetiro; cobrado: number } | null) {
+  return conCandado("negocio", async () => {
+    const d = await leerNegocio();
+    const actual = d.autos[id];
+    if (retiro === null) {
+      if (!actual?.retiro) return;
+      delete actual.retiro;
+    } else {
+      d.autos[id] = { ...completarNegocio(actual, d.ajustes), retiro: { ...retiro, fecha: new Date().toISOString() } };
     }
     await guardar(d);
   });
