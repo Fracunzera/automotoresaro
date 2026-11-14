@@ -8,13 +8,21 @@ import { useAgencia } from "./AgenciaContext";
 import { whatsappLink } from "@/lib/utils";
 import { Icon, WhatsAppIcon } from "./Icon";
 import { useCliente } from "./cuenta/ClienteContext";
+import { useCarrito } from "./tienda/CarritoContext";
+import { esTienda } from "@/lib/rubro";
 
-const nav = [
-  { href: "/autos", label: "Comprar" },
-  { href: "/vender", label: "Vender" },
-  { href: "/financiacion", label: "Financiación" },
-  { href: "/nosotros", label: "La agencia" },
-];
+const nav = esTienda
+  ? [
+      { href: "/productos", label: "Productos" },
+      { href: "/nosotros#preguntas", label: "Cómo comprar" },
+      { href: "/nosotros", label: "Nosotros" },
+    ]
+  : [
+      { href: "/autos", label: "Comprar" },
+      { href: "/vender", label: "Vender" },
+      { href: "/financiacion", label: "Financiación" },
+      { href: "/nosotros", label: "La agencia" },
+    ];
 
 export function Logo({ claro = false }: { claro?: boolean }) {
   const ag = useAgencia();
@@ -92,6 +100,7 @@ export function Header() {
             {admin && (
               <Link href="/admin" className="btn-tinta h-10! px-4! max-md:hidden">Panel</Link>
             )}
+            {esTienda && <BotonCarrito />}
             <Link
               href={cliente ? "/cuenta" : "/ingresar"}
               className={`flex h-10 items-center gap-1.5 rounded-md border border-stone-300 px-2.5 text-[15px] font-semibold transition-colors hover:border-tinta ${cargado ? "" : "invisible"}`}
@@ -134,7 +143,7 @@ export function Header() {
               {cliente ? "Mi cuenta y favoritos" : "Ingresar"}
             </Link>
             {admin && (
-              <Link href="/admin" className="border-b border-linea py-3.5 font-display text-xl font-bold uppercase text-rojo">Panel de la agencia</Link>
+              <Link href="/admin" className="border-b border-linea py-3.5 font-display text-xl font-bold uppercase text-rojo">Panel</Link>
             )}
             <div className="space-y-1 py-4 text-sm text-stone-600">
               <p>{ag.direccion}, {ag.ciudad}</p>
@@ -145,5 +154,19 @@ export function Header() {
         </nav>
       )}
     </header>
+  );
+}
+
+function BotonCarrito() {
+  const { cantidad } = useCarrito();
+  return (
+    <Link href="/carrito" aria-label={`Carrito, ${cantidad} productos`} className="relative grid size-10 place-items-center rounded-md border border-stone-300 hover:border-tinta">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} className="size-5" aria-hidden="true">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
+      </svg>
+      {cantidad > 0 && (
+        <span className="absolute -right-1.5 -top-1.5 grid min-w-5 place-items-center rounded-full bg-rojo px-1 text-xs font-bold text-white">{cantidad}</span>
+      )}
+    </Link>
   );
 }

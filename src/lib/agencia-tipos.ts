@@ -44,6 +44,9 @@ export interface Marca {
   portadaTitulo: string;
   portadaFoto: string;
   beneficios: Beneficio[];
+  /** Página "Nosotros". Párrafos separados por una línea en blanco. */
+  nosotrosTitulo: string;
+  nosotrosTexto: string;
 }
 
 export const ICONOS_BENEFICIO: { id: string; nombre: string }[] = [
@@ -73,6 +76,8 @@ export const MARCA_INICIAL: Marca = esTienda
         { titulo: "Compra segura", texto: "Te avisamos cada paso de tu pedido.", icono: "shield" },
         { titulo: "Atención por WhatsApp", texto: "Escribinos y te respondemos rápido.", icono: "phone" },
       ],
+      nosotrosTitulo: "Quiénes somos",
+      nosotrosTexto: "Somos una tienda local que ahora también vende online. Elegimos cada producto y te atendemos como siempre, ahora desde tu casa.\n\nComprá en la web y recibilo en tu casa o retiralo en el local.",
     }
   : {
       colorPrincipal: "#d12b1f",
@@ -83,6 +88,8 @@ export const MARCA_INICIAL: Marca = esTienda
       portadaTitulo: "Comprá, vendé o cambiá tu auto",
       portadaFoto: site.fotoPortada,
       beneficios: site.beneficios.map((b) => ({ ...b })),
+      nosotrosTitulo: "Atención de agencia de barrio, stock a un click",
+      nosotrosTexto: "Nos dedicamos a la compraventa de autos usados. Conocemos cada auto que vendemos y te acompañamos desde que lo elegís hasta que tenés la cédula a tu nombre.\n\nEn la web podés ver el stock actualizado, simular la cuota y cotizar tu usado. Cuando quieras, venís, lo ves y lo manejás.",
     };
 
 export const AGENCIA_INICIAL: Agencia = {

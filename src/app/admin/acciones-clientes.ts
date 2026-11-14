@@ -2,11 +2,13 @@
 
 import { randomUUID } from "node:crypto";
 import { getPublicos } from "@/lib/autos";
+import { getProductosPublicos } from "@/lib/productos";
+import { esTienda } from "@/lib/rubro";
 import { getAgencia } from "@/lib/agencia";
 import { guardarPrivado, leerPrivado } from "@/lib/almacen";
 import { conCandado } from "@/lib/candado";
 import { borrarCliente, emailValido, guardarClienteAgencia, leerClientes, normalizarEmail } from "@/lib/clientes";
-import { enviarMail, mailNovedades, urlSitio } from "@/lib/mail";
+import { enviarMail, itemDeAuto, mailNovedades, urlSitio, type ItemMail } from "@/lib/mail";
 import { requerirUsuario } from "@/lib/usuarios";
 import { tokenBaja } from "@/lib/sesion-cliente";
 
@@ -101,13 +103,23 @@ export async function enviarMailAccion(d: {
     const mensaje = texto(d.mensaje, 5000);
     if (!asunto) return { ok: false, error: "Escribí el asunto (el título del mail)." };
     if (!mensaje) return { ok: false, error: "Escribí el mensaje." };
-    const [publicos, ag] = await Promise.all([getPublicos(), getAgencia()]);
-    const autos = (Array.isArray(d.autos) ? d.autos : []).map((id) => publicos.find((a) => a.id === id)).filter((a) => !!a).slice(0, 6);
+    const ag = await getAgencia();
+    const ids = (Array.isArray(d.autos) ? d.autos : []).slice(0, 6);
+    let items: ItemMail[];
+    if (esTienda) {
+      const productos = await getProductosPublicos();
+      items = ids.map((id) => productos.find((p) => p.id === id)).filter((p) => !!p).map((p) => ({
+        titulo: p.nombre, detalle: p.categoria, precio: p.precio, foto: p.fotos[0] ?? "", ruta: `/productos/${p.slug}`, boton: "Comprar",
+      }));
+    } else {
+      const publicos = await getPublicos();
+      items = ids.map((id) => publicos.find((a) => a.id === id)).filter((a) => !!a).map(itemDeAuto);
+    }
 
     if (d.destino === "prueba") {
       const email = normalizarEmail(texto(d.emailPrueba, 120));
       if (!emailValido(email)) return { ok: false, error: "Escribí un email válido para la prueba." };
-      const m = mailNovedades(ag, { nombre: "", asunto: `[Prueba] ${asunto}`, mensaje, autos });
+      const m = mailNovedades(ag, { nombre: "", asunto: `[Prueba] ${asunto}`, mensaje, items });
       await enviarMail({ para: email, asunto: m.asunto, html: m.html, texto: m.texto, nombreAgencia: ag.nombre });
       return { ok: true, mensaje: `Se mandó la prueba a ${email}. Revisá tu casilla.` };
     }
@@ -132,7 +144,7 @@ export async function enviarMailAccion(d: {
       for (const c of destinatarios) {
         try {
           const linkBaja = c.aceptaMails ? `${urlSitio()}/baja?t=${tokenBaja(c.id)}` : undefined;
-          const m = mailNovedades(ag, { nombre: c.nombre, asunto, mensaje, autos, linkBaja });
+          const m = mailNovedades(ag, { nombre: c.nombre, asunto, mensaje, items, linkBaja });
           await enviarMail({ para: c.email, asunto: m.asunto, html: m.html, texto: m.texto, linkBaja, nombreAgencia: ag.nombre });
           enviados++;
         } catch (e) {

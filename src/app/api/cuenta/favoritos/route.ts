@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { getPublicos } from "@/lib/autos";
+import { getProductosPublicos } from "@/lib/productos";
+import { esTienda } from "@/lib/rubro";
 import { alternarFavorito } from "@/lib/clientes";
 import { idClienteActual } from "@/lib/sesion-cliente";
 
@@ -12,7 +14,8 @@ export async function POST(req: Request) {
   const favoritos = await alternarFavorito(id, autoId);
   if (!favoritos) return NextResponse.json({ error: "Ingresá de nuevo." }, { status: 401 });
   // Si el auto ya no existe, igual se puede quitar; para agregar tiene que estar publicado.
-  if (favoritos.includes(autoId) && !(await getPublicos()).some((a) => a.id === autoId)) {
+  const existe = esTienda ? (await getProductosPublicos()).some((p) => p.id === autoId) : (await getPublicos()).some((a) => a.id === autoId);
+  if (favoritos.includes(autoId) && !existe) {
     return NextResponse.json({ favoritos: await alternarFavorito(id, autoId) });
   }
   return NextResponse.json({ favoritos });

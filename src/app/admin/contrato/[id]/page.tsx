@@ -1,3 +1,4 @@
+import { esTienda } from "@/lib/rubro";
 import { requerirPagina } from "@/lib/usuarios";
 import { notFound } from "next/navigation";
 import { getAgencia } from "@/lib/agencia";
@@ -18,6 +19,7 @@ const blanco = (v: string, largo = 24) => (v ? v : "_".repeat(largo));
  * MODELO ORIENTATIVO: revisarlo con un abogado antes de usarlo.
  */
 export default async function Contrato({ params }: { params: Promise<{ id: string }> }) {
+  if (esTienda) notFound();
   await requerirPagina("admin");
   const { id } = await params;
   const [auto, negocio, ag] = await Promise.all([getPorId(id), leerNegocio(), getAgencia()]);

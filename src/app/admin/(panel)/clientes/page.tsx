@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { getTodos } from "@/lib/autos";
+import { getProductosTodos } from "@/lib/productos";
+import { esTienda } from "@/lib/rubro";
 import { leerClientes } from "@/lib/clientes";
 import { usuarioActual } from "@/lib/usuarios";
 import { ListaClientes, type FilaCliente } from "@/components/admin/ListaClientes";
@@ -9,9 +11,10 @@ type SP = Promise<Record<string, string | string[] | undefined>>;
 export default async function ClientesPage({ searchParams }: { searchParams: SP }) {
   const sp = await searchParams;
   const ok = typeof sp.ok === "string" ? sp.ok.slice(0, 300) : undefined;
-  const [clientes, autos, yo] = await Promise.all([leerClientes(), getTodos(), usuarioActual()]);
+  const [clientes, autos, productos, yo] = await Promise.all([leerClientes(), esTienda ? Promise.resolve([]) : getTodos(), esTienda ? getProductosTodos() : Promise.resolve([]), usuarioActual()]);
   const esAdmin = yo?.rol === "admin";
   const nombreAuto = (id: string) => {
+    if (esTienda) return productos.find((p) => p.id === id)?.nombre ?? null;
     const a = autos.find((x) => x.id === id);
     return a ? `${a.marca} ${a.modelo} ${a.anio}` : null;
   };

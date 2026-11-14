@@ -107,6 +107,23 @@ sudo certbot --nginx -d TUDOMINIO.com.ar -d www.TUDOMINIO.com.ar   # HTTPS grati
 
 Mandar mails directo desde un VPS casi siempre termina en spam. Conviene un proveedor SMTP (Brevo tiene un plan gratis de 300 mails por día; también Resend o Amazon SES) y **verificar el dominio** ahí: el proveedor te da registros **SPF** y **DKIM** para cargar en el DNS del dominio. Después se completan las variables `SMTP_*` y `MAIL_FROM` (ej. `ventas@tudominio.com.ar`).
 
+## Modo tienda online (`NEXT_PUBLIC_RUBRO=tienda`)
+
+El mismo sistema funciona como **tienda online** para cualquier comercio. Comparte todo lo común (panel, ingreso, empleados, clientes con favoritos, mails, marca y portada, datos del negocio) y cambia lo específico:
+
+- **Para el comprador:** portada con buscador, categorías, destacados y ofertas; catálogo con búsqueda, categorías y orden; página de producto con fotos, opciones (talle, color…), cantidad y aviso de "quedan pocos"; **carrito** (queda guardado en su celular); **finalizar compra** con retiro en el local o envío a domicilio (costo y envío gratis desde cierto monto) y pago con **Mercado Pago**, **transferencia** (muestra alias/CBU y botón para mandar el comprobante por WhatsApp) o **efectivo**; **página del pedido** para seguir el estado; en Mi cuenta, sus favoritos y sus pedidos.
+- **En el panel:**
+  - **Productos:** fotos, categoría, precio y precio anterior (oferta), stock con botones + y −, opciones, destacado, ocultar o publicar.
+  - **Pedidos:** Nuevos, En curso, Entregados y Cancelados. Un botón grande con el siguiente paso ("Empezar a prepararlo", "Ya lo envié", "Ya lo entregué"), "Ya me pagó", WhatsApp con el aviso ya escrito y notas internas. Al cancelar, el stock vuelve solo.
+  - **Ajustes → Envíos y pagos.**
+  - **Inicio:** pedidos nuevos, lo que falta cobrar, ventas del mes, ticket promedio, los más vendidos y productos para reponer.
+- **Seguridad:** el servidor recalcula precios, stock y envío al confirmar (no confía en el navegador). El stock se descuenta de a una compra por vez, así dos personas no pueden comprar la última unidad. El pedido solo lo ve quien tiene su link.
+- **Mails:** si el SMTP está configurado, llega un aviso a `ADMIN_EMAIL` por cada pedido y el comprador recibe la confirmación.
+
+**Mercado Pago:** cargar `MP_ACCESS_TOKEN` (Mercado Pago → Tus integraciones → Credenciales de producción) y activarlo en **Envíos y pagos**. El comprador paga en Mercado Pago y vuelve a la página de su pedido. El aviso de pago llega a `/api/mp/webhook` y el sistema lo verifica consultando a Mercado Pago antes de marcarlo como pagado. Hace falta que el sitio esté publicado con HTTPS para que lleguen los avisos.
+
+Una tienda nueva arranca con productos de ejemplo, que se borran con un botón desde el Inicio del panel.
+
 ## Vender el sistema a otras agencias (o tiendas)
 
 Cada cliente tiene **su propia página**: su dominio, su marca y sus datos, totalmente separados de los demás. Todas corren en tu VPS, cada una en su carpeta y en su puerto.

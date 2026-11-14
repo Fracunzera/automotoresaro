@@ -1,3 +1,5 @@
+import { esTienda } from "@/lib/rubro";
+import { notFound } from "next/navigation";
 import { AutoForm } from "@/components/admin/AutoForm";
 import { leerNegocio } from "@/lib/negocio";
 import { negocioVacio } from "@/lib/negocio-tipos";
@@ -9,6 +11,7 @@ import { COMBUSTIBLES, TRANSMISIONES, marcaConocida, type DatosAuto } from "@/li
 type SP = Promise<Record<string, string | string[] | undefined>>;
 
 export default async function NuevoAuto({ searchParams }: { searchParams: SP }) {
+  if (esTienda) notFound();
   const sp = await searchParams;
   const [{ ajustes }, yo, consulta] = await Promise.all([
     leerNegocio(),

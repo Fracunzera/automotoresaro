@@ -1,11 +1,14 @@
 import Link from "next/link";
 import { requerirPagina } from "@/lib/usuarios";
+import { esTienda } from "@/lib/rubro";
 
 const opciones = [
   { href: "/admin/agencia", titulo: "Datos del negocio", texto: "Dirección, teléfono, WhatsApp, horarios y redes." },
   { href: "/admin/marca", titulo: "Marca y portada", texto: "Colores, logo, foto y textos de la portada, y beneficios." },
   { href: "/admin/empleados", titulo: "Empleados", texto: "Dar de alta vendedores o administradores, cambiarles la contraseña o darlos de baja." },
-  { href: "/admin/ajustes", titulo: "Comisiones y financiación", texto: "Comisión por autos de clientes, acuerdo de consignación, tasa y cuotas." },
+  esTienda
+    ? { href: "/admin/tienda", titulo: "Envíos y pagos", texto: "Retiro, envío a domicilio y su costo, Mercado Pago, transferencia y efectivo." }
+    : { href: "/admin/ajustes", titulo: "Comisiones y financiación", texto: "Comisión por autos de clientes, acuerdo de consignación, tasa y cuotas." },
   { href: "/admin/mi-cuenta", titulo: "Mi contraseña", texto: "Cambiar la contraseña con la que entrás." },
 ];
 

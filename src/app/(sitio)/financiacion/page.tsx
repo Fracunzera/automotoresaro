@@ -1,3 +1,5 @@
+import { esTienda } from "@/lib/rubro";
+import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getFinanciacion } from "@/lib/negocio";
@@ -16,6 +18,7 @@ const requisitos = [
 ];
 
 export default async function FinanciacionPage() {
+  if (esTienda) notFound();
   const fin = await getFinanciacion();
   const { anticipoMinimo, plazos } = fin;
   return (

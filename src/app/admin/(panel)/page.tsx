@@ -1,3 +1,5 @@
+import { esTienda } from "@/lib/rubro";
+import { TableroTienda } from "@/components/admin/TableroTienda";
 import Link from "next/link";
 import { getTodos } from "@/lib/autos";
 import { leerNegocio } from "@/lib/negocio";
@@ -24,6 +26,10 @@ function Dato({ titulo, valor, detalle }: { titulo: string; valor: string; detal
 type SP = Promise<Record<string, string | string[] | undefined>>;
 
 export default async function Tablero({ searchParams }: { searchParams: SP }) {
+  if (esTienda) {
+    const [yo, sp] = await Promise.all([usuarioActual(), searchParams]);
+    return <TableroTienda esAdmin={yo?.rol === "admin"} sinPermiso={!!sp.sinPermiso} />;
+  }
   const [autos, negocio, clientes, yo, sp, consultasNuevas] = await Promise.all([getTodos(), leerNegocio(), leerClientes(), usuarioActual(), searchParams, contarNuevas()]);
   const esAdmin = yo?.rol === "admin";
   const { ajustes } = negocio;

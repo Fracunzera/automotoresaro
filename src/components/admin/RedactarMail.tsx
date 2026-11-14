@@ -6,6 +6,7 @@ import { enviarMailAccion } from "@/app/admin/acciones-clientes";
 import { formatNumero } from "@/lib/utils";
 import { Opciones } from "./Campos";
 import { Confirmar } from "./Confirmar";
+import { esTienda } from "@/lib/rubro";
 
 type ClienteMin = { id: string; nombre: string; email: string; aceptaMails: boolean };
 type AutoMin = { id: string; titulo: string; precio: number };
@@ -80,13 +81,13 @@ export function RedactarMail({
             value={mensaje}
             onChange={(e) => setMensaje(e.target.value)}
             className="campo-g h-auto! py-3"
-            placeholder={"Ej: Esta semana ingresaron autos que te pueden interesar. Te esperamos en la agencia o escribinos por WhatsApp."}
+            placeholder={esTienda ? "Ej: Llegaron productos nuevos y hay ofertas por tiempo limitado. Entrá a la tienda y aprovechá." : "Ej: Esta semana ingresaron autos que te pueden interesar. Te esperamos en la agencia o escribinos por WhatsApp."}
           />
           <p className="ayuda-g">El saludo con el nombre (“Hola Juan,”) se agrega solo.</p>
         </div>
         {autos.length > 0 && (
           <fieldset>
-            <legend className="etiqueta-g">Sumar autos al mail <span className="font-normal text-stone-500">(opcional, hasta 6)</span></legend>
+            <legend className="etiqueta-g">Sumar {esTienda ? "productos" : "autos"} al mail <span className="font-normal text-stone-500">(opcional, hasta 6)</span></legend>
             <div className="space-y-2">
               {autos.map((a) => {
                 const on = elegidos.includes(a.id);

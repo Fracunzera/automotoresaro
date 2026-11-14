@@ -4,28 +4,43 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { salir } from "@/app/admin/acciones";
 import { useAgencia } from "../AgenciaContext";
+import { esTienda } from "@/lib/rubro";
 
 type Item = { href: string; label: string; exacto?: boolean; tambien?: string[]; soloAdmin?: boolean; soloVendedor?: boolean };
 
-const links: Item[] = [
+const AJUSTES = ["/admin/ajustes", "/admin/agencia", "/admin/marca", "/admin/empleados", "/admin/mi-cuenta", "/admin/tienda"];
+
+const links: Item[] = esTienda
+  ? [
+      { href: "/admin", label: "Inicio", exacto: true },
+      { href: "/admin/productos", label: "Productos" },
+      { href: "/admin/productos/nuevo", label: "Cargar producto", exacto: true },
+      { href: "/admin/pedidos", label: "Pedidos" },
+      { href: "/admin/clientes", label: "Clientes" },
+      { href: "/admin/mails", label: "Mails", soloAdmin: true },
+      { href: "/admin/configuracion", label: "Ajustes", soloAdmin: true, tambien: AJUSTES },
+      { href: "/admin/mi-cuenta", label: "Mi contraseña", soloVendedor: true },
+    ]
+  : [
   { href: "/admin", label: "Inicio", exacto: true },
   { href: "/admin/autos", label: "Mis autos" },
   { href: "/admin/autos/nuevo", label: "Cargar auto", exacto: true },
   { href: "/admin/consultas", label: "Consultas" },
   { href: "/admin/clientes", label: "Clientes" },
   { href: "/admin/mails", label: "Mails", soloAdmin: true },
-  { href: "/admin/configuracion", label: "Ajustes", soloAdmin: true, tambien: ["/admin/ajustes", "/admin/agencia", "/admin/marca", "/admin/empleados", "/admin/mi-cuenta"] },
+  { href: "/admin/configuracion", label: "Ajustes", soloAdmin: true, tambien: AJUSTES },
   { href: "/admin/mi-cuenta", label: "Mi contraseña", soloVendedor: true },
 ];
 
 export function PanelNav({ nombreUsuario, esAdmin, consultasNuevas }: { nombreUsuario: string; esAdmin: boolean; consultasNuevas: number }) {
+  const conNumero = esTienda ? "/admin/pedidos" : "/admin/consultas";
   const path = usePathname();
   const { nombre } = useAgencia();
   const visibles = links.filter((l) => (l.soloAdmin ? esAdmin : l.soloVendedor ? !esAdmin : true));
   const activo = (l: Item) =>
     l.exacto
       ? path === l.href
-      : [l.href, ...(l.tambien ?? [])].some((h) => path.startsWith(h)) && !(l.href === "/admin/autos" && path === "/admin/autos/nuevo");
+      : [l.href, ...(l.tambien ?? [])].some((h) => path.startsWith(h)) && !path.endsWith("/nuevo");
 
   return (
     <header className="sticky top-0 z-40 bg-tinta text-white">
@@ -55,7 +70,7 @@ export function PanelNav({ nombreUsuario, esAdmin, consultasNuevas }: { nombreUs
             }`}
           >
             {l.label}
-            {l.href === "/admin/consultas" && consultasNuevas > 0 && (
+            {l.href === conNumero && consultasNuevas > 0 && (
               <span className="ml-1.5 inline-grid min-w-6 place-items-center rounded-full bg-rojo px-1.5 text-sm font-bold text-white" aria-label={`${consultasNuevas} nuevas`}>
                 {consultasNuevas}
               </span>

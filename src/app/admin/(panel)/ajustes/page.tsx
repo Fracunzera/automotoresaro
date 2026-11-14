@@ -1,9 +1,12 @@
+import { esTienda } from "@/lib/rubro";
+import { notFound } from "next/navigation";
 import { requerirPagina } from "@/lib/usuarios";
 import { AjustesForm } from "@/components/admin/AjustesForm";
 import { leerNegocio } from "@/lib/negocio";
 import { usaNube } from "@/lib/almacen";
 
 export default async function AjustesPage() {
+  if (esTienda) notFound();
   await requerirPagina("admin");
   const { ajustes } = await leerNegocio();
   return (

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getAgencia } from "@/lib/agencia";
+import { esTienda } from "@/lib/rubro";
 import { linkMapa, telLink } from "@/lib/agencia-tipos";
 import { whatsappLink } from "@/lib/utils";
 import { Logo } from "./Header";
@@ -13,6 +14,27 @@ export async function Footer() {
           <Logo claro />
           <p className="mt-5 max-w-xs text-[15px] leading-relaxed">{ag.marca.descripcion}</p>
         </div>
+{esTienda ? (
+          <>
+        <div>
+          <h3 className="font-display text-sm font-semibold tracking-[0.12em] text-white uppercase">Tienda</h3>
+          <ul className="mt-4 space-y-2.5 text-[15px]">
+            <li><Link href="/productos" className="hover:text-white">Todos los productos</Link></li>
+            <li><Link href="/carrito" className="hover:text-white">Mi carrito</Link></li>
+            <li><Link href="/cuenta" className="hover:text-white">Mis favoritos y pedidos</Link></li>
+          </ul>
+        </div>
+        <div>
+          <h3 className="font-display text-sm font-semibold tracking-[0.12em] text-white uppercase">Ayuda</h3>
+          <ul className="mt-4 space-y-2.5 text-[15px]">
+            <li><Link href="/nosotros#preguntas" className="hover:text-white">Cómo comprar</Link></li>
+            <li><Link href="/nosotros#preguntas" className="hover:text-white">Envíos y pagos</Link></li>
+            <li><Link href="/nosotros" className="hover:text-white">Nosotros</Link></li>
+          </ul>
+        </div>
+          </>
+        ) : (
+          <>
         <div>
           <h3 className="font-display text-sm font-semibold tracking-[0.12em] text-white uppercase">Autos</h3>
           <ul className="mt-4 space-y-2.5 text-[15px]">
@@ -32,8 +54,10 @@ export async function Footer() {
             <li><Link href="/cuenta" className="hover:text-white">Mis favoritos</Link></li>
           </ul>
         </div>
+          </>
+        )}
         <div>
-          <h3 className="font-display text-sm font-semibold tracking-[0.12em] text-white uppercase">Agencia</h3>
+          <h3 className="font-display text-sm font-semibold tracking-[0.12em] text-white uppercase">{esTienda ? "Contacto" : "Agencia"}</h3>
           <ul className="mt-4 space-y-2.5 text-[15px]">
             <li><a href={linkMapa(ag)} target="_blank" rel="noopener noreferrer" className="hover:text-white">{ag.direccion}, {ag.ciudad}</a></li>
             <li>{ag.horarios}</li>
@@ -52,9 +76,9 @@ export async function Footer() {
         <div className="contenedor flex flex-col gap-1 py-5 text-[13px] text-stone-500 sm:flex-row sm:justify-between">
           <p>© {new Date().getFullYear()} {ag.nombre}</p>
           <p>
-            Precios y cuotas de referencia, sujetos a cambios sin previo aviso. ·{" "}
+            {esTienda ? "Precios sujetos a cambios sin previo aviso." : "Precios y cuotas de referencia, sujetos a cambios sin previo aviso."} ·{" "}
             <Link href="/privacidad" className="hover:text-white">Privacidad</Link> ·{" "}
-            <Link href="/ingresar?agencia=1" className="hover:text-white">Acceso agencia</Link>
+            <Link href="/ingresar?agencia=1" className="hover:text-white">{esTienda ? "Acceso tienda" : "Acceso agencia"}</Link>
           </p>
         </div>
       </div>

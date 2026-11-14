@@ -1,3 +1,5 @@
+import { esTienda } from "@/lib/rubro";
+import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { getAgencia } from "@/lib/agencia";
 import { getPublicos } from "@/lib/autos";
@@ -15,6 +17,7 @@ export async function generateMetadata(): Promise<Metadata> {
 type SP = Promise<Record<string, string | string[] | undefined>>;
 
 export default async function AutosPage({ searchParams }: { searchParams: SP }) {
+  if (esTienda) notFound();
   const sp = await searchParams;
   const [autos, fin, ag] = await Promise.all([getPublicos(), getFinanciacion(), getAgencia()]);
   const s = (k: string) => (typeof sp[k] === "string" ? (sp[k] as string) : undefined);

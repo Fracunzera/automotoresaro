@@ -1,3 +1,5 @@
+import { esTienda } from "@/lib/rubro";
+import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getTodos } from "@/lib/autos";
 import { leerNegocio } from "@/lib/negocio";
@@ -10,6 +12,7 @@ import { ListaAutos, type FilaAuto } from "@/components/admin/ListaAutos";
 type SP = Promise<Record<string, string | string[] | undefined>>;
 
 export default async function MisAutos({ searchParams }: { searchParams: SP }) {
+  if (esTienda) notFound();
   const sp = await searchParams;
   const [autos, negocioTodo, clientes, yo] = await Promise.all([getTodos(), leerNegocio(), leerClientes(), usuarioActual()]);
   const esAdmin = yo?.rol === "admin";

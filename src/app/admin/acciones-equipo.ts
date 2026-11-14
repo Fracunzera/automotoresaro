@@ -83,6 +83,8 @@ export async function guardarMarcaAccion(d: Record<string, unknown>): Promise<Re
       portadaTitulo: texto(d.portadaTitulo, 80),
       portadaFoto: imagenPropia(d.portadaFoto),
       beneficios,
+      nosotrosTitulo: texto(d.nosotrosTitulo, 100),
+      nosotrosTexto: texto(d.nosotrosTexto, 3000),
     };
     if (!m.portadaTitulo) return { ok: false, error: "Escribí el título de la portada." };
     const actual = await getAgencia();

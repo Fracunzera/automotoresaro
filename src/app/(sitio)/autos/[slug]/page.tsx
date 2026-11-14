@@ -1,3 +1,4 @@
+import { esTienda } from "@/lib/rubro";
 import type { Metadata } from "next";
 import { getAgencia } from "@/lib/agencia";
 import Link from "next/link";
@@ -31,6 +32,7 @@ const inspeccion: [string, string[]][] = [
 ];
 
 export default async function AutoPage({ params }: { params: Params }) {
+  if (esTienda) notFound();
   const auto = await getPorSlug((await params).slug);
   if (!auto) notFound();
   const [autos, fin, ag] = await Promise.all([getPublicos(), getFinanciacion(), getAgencia()]);

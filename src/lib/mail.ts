@@ -11,6 +11,8 @@ import type { Auto } from "./tipos";
 import { formatKm, formatNumero } from "./utils";
 
 let transporte: Transporter | null = null;
+/** Color de los botones del mail (el principal de la marca). */
+let ag_color = "#d12b1f";
 
 export const mailConfigurado = () => !!process.env.SMTP_HOST;
 
@@ -54,8 +56,8 @@ function marco(ag: Agencia, contenido: string, pie: string) {
   return `<!doctype html><html lang="es"><body style="margin:0;background:#f3f2ef;font-family:Arial,Helvetica,sans-serif;color:#15171a">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f3f2ef;padding:24px 12px"><tr><td align="center">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background:#ffffff;border-radius:8px;overflow:hidden">
-<tr><td style="background:#15171a;padding:18px 24px;font-size:22px;font-weight:bold;letter-spacing:-0.5px;color:#ffffff;text-transform:uppercase">
-${escapar(ag.nombre.split(" ").slice(0, -1).join(" "))} <span style="color:#d12b1f">${escapar(ag.nombre.split(" ").pop() ?? "")}</span></td></tr>
+<tr><td style="background:${escapar(ag.marca.colorOscuro)};padding:18px 24px;font-size:22px;font-weight:bold;letter-spacing:-0.5px;color:#ffffff;text-transform:uppercase">
+${escapar(ag.nombre.split(" ").slice(0, -1).join(" "))} <span style="color:${escapar(ag.marca.colorPrincipal)}">${escapar(ag.nombre.split(" ").pop() ?? "")}</span></td></tr>
 <tr><td style="padding:28px 24px;font-size:16px;line-height:1.55">${contenido}</td></tr>
 <tr><td style="padding:18px 24px;background:#f3f2ef;font-size:12px;line-height:1.5;color:#6b6b6b">${pie}</td></tr>
 </table></td></tr></table></body></html>`;
@@ -75,33 +77,54 @@ export function mailCodigo(ag: Agencia, codigo: string) {
   return { asunto: `Tu código de ingreso: ${codigo}`, html, texto: `Tu código para entrar a ${ag.nombre} es ${codigo}. Vence en 15 minutos.` };
 }
 
-function tarjetaAuto(a: Auto) {
-  const url = `${urlSitio()}/autos/${a.slug}`;
-  const foto = a.fotos[0]
-    ? `<a href="${url}"><img src="${escapar(absoluta(a.fotos[0]))}" width="552" alt="" style="display:block;width:100%;height:auto;border-radius:6px 6px 0 0"></a>`
+/** Un auto o producto para mostrar dentro de un mail. */
+export interface ItemMail {
+  titulo: string;
+  detalle: string;
+  precio: number;
+  foto: string;
+  /** Ruta dentro del sitio (ej. /autos/toyota-corolla). */
+  ruta: string;
+  boton: string;
+}
+
+export const itemDeAuto = (a: Auto): ItemMail => ({
+  titulo: `${a.marca} ${a.modelo}`,
+  detalle: `${a.anio} · ${formatKm(a.km)} · ${a.version}`,
+  precio: a.precio,
+  foto: a.fotos[0] ?? "",
+  ruta: `/autos/${a.slug}`,
+  boton: "Ver el auto",
+});
+
+function tarjeta(a: ItemMail) {
+  const url = `${urlSitio()}${a.ruta}`;
+  const foto = a.foto
+    ? `<a href="${url}"><img src="${escapar(absoluta(a.foto))}" width="552" alt="" style="display:block;width:100%;height:auto;border-radius:6px 6px 0 0"></a>`
     : "";
   return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 16px;border:1px solid #e3e1dc;border-radius:6px">
 <tr><td>${foto}</td></tr><tr><td style="padding:14px 16px">
-<div style="font-size:18px;font-weight:bold">${escapar(`${a.marca} ${a.modelo}`)}</div>
-<div style="color:#6b6b6b;font-size:14px">${a.anio} · ${formatKm(a.km)} · ${escapar(a.version)}</div>
+<div style="font-size:18px;font-weight:bold">${escapar(a.titulo)}</div>
+${a.detalle ? `<div style="color:#6b6b6b;font-size:14px">${escapar(a.detalle)}</div>` : ""}
 <div style="font-size:24px;font-weight:bold;margin:8px 0">$ ${formatNumero(a.precio)}</div>
-<a href="${url}" style="display:inline-block;background:#d12b1f;color:#ffffff;text-decoration:none;font-weight:bold;padding:10px 18px;border-radius:5px">Ver el auto</a>
+<a href="${url}" style="display:inline-block;background:${escapar(ag_color)};color:#ffffff;text-decoration:none;font-weight:bold;padding:10px 18px;border-radius:5px">${escapar(a.boton)}</a>
 </td></tr></table>`;
 }
 
 /** Mail de novedades escrito desde el panel. */
-export function mailNovedades(ag: Agencia, o: { nombre: string; asunto: string; mensaje: string; autos: Auto[]; linkBaja?: string }) {
+export function mailNovedades(ag: Agencia, o: { nombre: string; asunto: string; mensaje: string; items: ItemMail[]; linkBaja?: string }) {
+  ag_color = ag.marca.colorPrincipal;
   const parrafos = o.mensaje
     .split(/\n{2,}/)
     .map((p) => `<p style="margin:0 0 14px">${escapar(p).replace(/\n/g, "<br>")}</p>`)
     .join("");
   const saludo = o.nombre ? `<p style="margin:0 0 14px">Hola ${escapar(o.nombre.split(" ")[0])},</p>` : "";
   const pie = `${pieBase(ag)}${o.linkBaja ? `<br>Recibís este mail porque aceptaste recibir novedades. <a href="${o.linkBaja}" style="color:#6b6b6b">No quiero recibir más mails</a>.` : ""}`;
-  const html = marco(ag, `${saludo}${parrafos}${o.autos.map(tarjetaAuto).join("")}`, pie);
+  const html = marco(ag, `${saludo}${parrafos}${o.items.map(tarjeta).join("")}`, pie);
   const texto = [
     o.nombre ? `Hola ${o.nombre.split(" ")[0]},` : "",
     o.mensaje,
-    ...o.autos.map((a) => `${a.marca} ${a.modelo} ${a.anio} · $ ${formatNumero(a.precio)}: ${urlSitio()}/autos/${a.slug}`),
+    ...o.items.map((a) => `${a.titulo} · $ ${formatNumero(a.precio)}: ${urlSitio()}${a.ruta}`),
     o.linkBaja ? `\nPara no recibir más mails: ${o.linkBaja}` : "",
   ].filter(Boolean).join("\n\n");
   return { asunto: o.asunto, html, texto };

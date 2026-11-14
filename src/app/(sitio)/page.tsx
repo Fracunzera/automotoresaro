@@ -1,3 +1,5 @@
+import { esTienda } from "@/lib/rubro";
+import { InicioTienda } from "@/components/tienda/InicioTienda";
 import Link from "next/link";
 import { getAgencia } from "@/lib/agencia";
 import { linkMapa, telLink } from "@/lib/agencia-tipos";
@@ -12,6 +14,7 @@ import { Icon } from "@/components/Icon";
 const tipos: Carroceria[] = ["SUV", "Pick-up", "Sedán", "Hatchback", "Utilitario"];
 
 export default async function Home() {
+  if (esTienda) return <InicioTienda />;
   const [autos, fin, ag] = await Promise.all([getPublicos(), getFinanciacion(), getAgencia()]);
   const disponibles = autos.filter((a) => a.estado === "publicado");
   const recientes = [...disponibles].sort((a, b) => Number(!!b.destacado) - Number(!!a.destacado)).slice(0, 8);

@@ -160,6 +160,18 @@ export function MarcaForm({ inicial, nombre }: { inicial: Marca; nombre: string 
         )}
       </Seccion>
 
+      <Seccion titulo="Página “Nosotros”" ayuda="Contá la historia del negocio: desde cuándo están, quiénes atienden, qué los diferencia.">
+        <div>
+          <label htmlFor="nos-titulo" className="etiqueta-g">Título</label>
+          <input id="nos-titulo" value={m.nosotrosTitulo} onChange={(e) => set("nosotrosTitulo", e.target.value)} maxLength={100} className="campo-g" />
+        </div>
+        <div>
+          <label htmlFor="nos-texto" className="etiqueta-g">Texto</label>
+          <textarea id="nos-texto" rows={6} value={m.nosotrosTexto} onChange={(e) => set("nosotrosTexto", e.target.value)} maxLength={3000} className="campo-g h-auto! py-3" />
+          <p className="ayuda-g">Dejá una línea en blanco para separar párrafos.</p>
+        </div>
+      </Seccion>
+
       <div className="sticky bottom-0 -mx-4 border-t-2 border-linea bg-white p-4 sm:static sm:mx-0 sm:rounded-lg sm:border-2">
         <button disabled={guardando} className="btn-g w-full bg-rojo text-white hover:bg-rojo-oscuro">{guardando ? "Guardando…" : "Guardar marca"}</button>
       </div>

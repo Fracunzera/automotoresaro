@@ -1,3 +1,4 @@
+import { esTienda } from "@/lib/rubro";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AutoForm } from "@/components/admin/AutoForm";
@@ -8,6 +9,7 @@ import { usuarioActual } from "@/lib/usuarios";
 import { ESTADO_TEXTO } from "@/lib/tipos";
 
 export default async function EditarAuto({ params }: { params: Promise<{ id: string }> }) {
+  if (esTienda) notFound();
   const { id } = await params;
   const [auto, negocio, yo] = await Promise.all([getPorId(id), leerNegocio(), usuarioActual()]);
   const esAdmin = yo?.rol === "admin";

@@ -1,3 +1,5 @@
+import { esTienda } from "@/lib/rubro";
+import { notFound } from "next/navigation";
 import Link from "next/link";
 import { leerConsultas, type EstadoConsulta } from "@/lib/consultas";
 import { getAgencia } from "@/lib/agencia";
@@ -13,6 +15,7 @@ const GRUPOS: { id: string; label: string; estados: EstadoConsulta[] }[] = [
 ];
 
 export default async function ConsultasPage({ searchParams }: { searchParams: SP }) {
+  if (esTienda) notFound();
   const sp = await searchParams;
   const [consultas, ag, yo] = await Promise.all([leerConsultas(), getAgencia(), usuarioActual()]);
   const grupo = GRUPOS.find((g) => g.id === sp.ver) ?? GRUPOS[0];

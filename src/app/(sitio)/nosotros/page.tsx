@@ -1,3 +1,4 @@
+import { esTienda } from "@/lib/rubro";
 import type { Metadata } from "next";
 import { getAgencia } from "@/lib/agencia";
 import { linkMapa } from "@/lib/agencia-tipos";
@@ -6,10 +7,19 @@ import { Icon, WhatsAppIcon } from "@/components/Icon";
 
 export async function generateMetadata(): Promise<Metadata> {
   const ag = await getAgencia();
-  return { title: "La agencia", description: `Conocé ${ag.nombre}: dónde estamos, cómo trabajamos y respuestas a las preguntas más comunes.` };
+  return { title: esTienda ? "Nosotros" : "La agencia", description: `Conocé ${ag.nombre}: dónde estamos, cómo trabajamos y respuestas a las preguntas más comunes.` };
 }
 
-const preguntas = (ag: Awaited<ReturnType<typeof getAgencia>>) => [
+const preguntasTienda = (ag: Awaited<ReturnType<typeof getAgencia>>) => [
+  ["¿Cómo compro?", "Elegí los productos, agregalos al carrito y tocá “Finalizar compra”. Completás tus datos, elegís cómo recibirlo y cómo pagar, y listo."],
+  ["¿Hacen envíos?", `Sí, hacemos envíos a domicilio. También podés retirar sin cargo en ${ag.direccion}, ${ag.ciudad}. El costo del envío lo ves antes de confirmar.`],
+  ["¿Cómo puedo pagar?", "Con Mercado Pago (tarjeta de crédito, débito o dinero en cuenta), por transferencia o en efectivo al retirar o recibir."],
+  ["¿Cómo sigo mi pedido?", "Al confirmar la compra te damos un link para ver en qué estado está. Si dejaste tu email, también te llega por mail."],
+  ["¿Puedo cambiar un producto?", "Sí. Escribinos por WhatsApp y te explicamos cómo hacer el cambio."],
+  ["¿Necesito crear una cuenta?", "No hace falta. Si querés guardar favoritos y ver tus pedidos, podés ingresar solo con tu email."],
+];
+
+const preguntas = (ag: Awaited<ReturnType<typeof getAgencia>>) => esTienda ? preguntasTienda(ag) : [
   ["¿Los autos están revisados?", "Sí. Antes de publicar un auto revisamos mecánica, frenos, electricidad y carrocería, y verificamos que la documentación esté en regla."],
   ["¿Puedo entregar mi auto como parte de pago?", "Sí. Te lo cotizamos y el valor se descuenta del auto que elijas. Empezá desde Vender mi auto."],
   ["¿Cómo funciona la financiación?", "Pagás un anticipo y el resto en cuotas fijas. La aprobación y la tasa final dependen de la entidad financiera."],
@@ -26,16 +36,11 @@ export default async function NosotrosPage() {
     <div className="contenedor pt-10">
       <div className="grid gap-14 lg:grid-cols-2">
         <div>
-          <p className="sobretitulo">La agencia</p>
-          <h1 className="titulo mt-2 text-[44px] sm:text-[56px]">Atención de agencia de barrio, stock a un click</h1>
-          {/* TODO: reemplazar por la historia real (desde qué año, quiénes atienden, etc.) */}
-          <p className="mt-5 text-lg leading-relaxed text-stone-700">
-            En {ag.nombre} nos dedicamos a la compraventa de autos usados. Conocemos cada auto que vendemos y te
-            acompañamos desde que lo elegís hasta que tenés la cédula a tu nombre.
-          </p>
-          <p className="mt-4 leading-relaxed text-stone-700">
-            En la web podés ver el stock actualizado, simular la cuota y cotizar tu usado. Cuando quieras, venís, lo ves y lo manejás.
-          </p>
+          <p className="sobretitulo">{esTienda ? "Nosotros" : "La agencia"}</p>
+          <h1 className="titulo mt-2 text-[44px] sm:text-[56px]">{ag.marca.nosotrosTitulo}</h1>
+          {ag.marca.nosotrosTexto.split(/\n\s*\n/).map((par, i) => (
+            <p key={i} className={`${i === 0 ? "mt-5 text-lg" : "mt-4"} whitespace-pre-line leading-relaxed text-stone-700`}>{par}</p>
+          ))}
 
           <div className="mt-10 rounded-lg bg-papel p-6">
             <h2 className="titulo text-2xl">Dónde estamos</h2>

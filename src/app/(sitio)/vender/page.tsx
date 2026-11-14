@@ -1,3 +1,5 @@
+import { esTienda } from "@/lib/rubro";
+import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { SellForm } from "@/components/SellForm";
 
@@ -9,6 +11,7 @@ export const metadata: Metadata = {
 type SP = Promise<Record<string, string | string[] | undefined>>;
 
 export default async function VenderPage({ searchParams }: { searchParams: SP }) {
+  if (esTienda) notFound();
   const sp = await searchParams;
   const s = (k: string) => (typeof sp[k] === "string" ? (sp[k] as string) : undefined);
   const cambio = s("modo") === "cambio";

@@ -1,12 +1,14 @@
 import { PanelNav } from "@/components/admin/PanelNav";
 import { requerirPagina } from "@/lib/usuarios";
 import { contarNuevas } from "@/lib/consultas";
+import { contarPedidosNuevos } from "@/lib/pedidos";
+import { esTienda } from "@/lib/rubro";
 
 export const dynamic = "force-dynamic";
 
 export default async function PanelLayout({ children }: { children: React.ReactNode }) {
   const u = await requerirPagina();
-  const nuevas = await contarNuevas();
+  const nuevas = esTienda ? await contarPedidosNuevos() : await contarNuevas();
   return (
     <>
       <PanelNav nombreUsuario={u.nombre} esAdmin={u.rol === "admin"} consultasNuevas={nuevas} />
