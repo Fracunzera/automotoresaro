@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { site } from "@/config/site";
-import { autos, getAuto, tituloAuto } from "@/data/autos";
+import { getPorSlug, getPublicos, tituloAuto } from "@/lib/autos";
+import { getFinanciacion } from "@/lib/negocio";
 import { cuotaMensual, formatKm, formatNumero, formatPrecio, whatsappLink } from "@/lib/utils";
 import { CarCard, Precio } from "@/components/CarCard";
 import { FinancingCalculator } from "@/components/FinancingCalculator";
@@ -11,12 +12,8 @@ import { Icon, WhatsAppIcon } from "@/components/Icon";
 
 type Params = Promise<{ slug: string }>;
 
-export function generateStaticParams() {
-  return autos.map((a) => ({ slug: a.slug }));
-}
-
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
-  const auto = getAuto((await params).slug);
+  const auto = await getPorSlug((await params).slug);
   if (!auto) return {};
   return {
     title: `${tituloAuto(auto)} ${auto.anio}`,
@@ -33,11 +30,12 @@ const inspeccion: [string, string[]][] = [
 ];
 
 export default async function AutoPage({ params }: { params: Params }) {
-  const auto = getAuto((await params).slug);
+  const auto = await getPorSlug((await params).slug);
   if (!auto) notFound();
+  const [autos, fin] = await Promise.all([getPublicos(), getFinanciacion()]);
 
   const titulo = `${tituloAuto(auto)} ${auto.anio}`;
-  const { tna, anticipoMinimo, plazos } = site.financiacion;
+  const { tna, anticipoMinimo, plazos } = fin;
   const plazoMax = Math.max(...plazos);
   const cuota = cuotaMensual(auto.precio * (1 - anticipoMinimo), plazoMax, tna);
 
@@ -54,7 +52,7 @@ export default async function AutoPage({ params }: { params: Params }) {
     ["check", "Carrocería", `${auto.carroceria}, ${auto.puertas} puertas`],
     ["star", "Color", auto.color],
     ["shield", "Dueños", auto.unicoDueno ? "Único dueño" : "Consultar"],
-  ];
+  ].filter(([, , v]) => v.trim() !== "") as [string, string, string][];
 
   const secciones = [
     ["resumen", "Resumen"],
@@ -139,7 +137,7 @@ export default async function AutoPage({ params }: { params: Params }) {
           <section id="financiacion" className="scroll-mt-40 pt-12">
             <h2 className="titulo text-[28px]">Simulá tu cuota</h2>
             <div className="mt-5 rounded-lg border border-linea p-5 sm:p-6">
-              <FinancingCalculator precio={auto.precio} tituloAuto={titulo} variante="ancho" />
+              <FinancingCalculator fin={fin} precio={auto.precio} tituloAuto={titulo} variante="ancho" />
             </div>
           </section>
         </div>
@@ -147,7 +145,7 @@ export default async function AutoPage({ params }: { params: Params }) {
         {/* Panel de compra */}
         <aside className="lg:sticky lg:top-[120px] lg:self-start">
           <div className="rounded-lg border border-linea p-5 sm:p-6">
-            {auto.reservado && (
+            {auto.estado === "reservado" && (
               <p className="mb-3 rounded-sm bg-tinta px-3 py-2 text-sm font-semibold text-white">
                 Reservado. Consultanos por autos similares.
               </p>
@@ -196,10 +194,21 @@ export default async function AutoPage({ params }: { params: Params }) {
               ))}
             </ul>
           </div>
-          <p className="mt-3 px-1 text-[13px] text-stone-500">
-            <Icon name="pin" className="mr-1 inline size-4 align-[-3px]" />
-            Lo podés ver en {site.direccion}, {site.ciudad}.
-          </p>
+          <div className="mt-4 rounded-lg bg-papel p-5">
+            <p className="flex items-start gap-2 font-semibold">
+              <Icon name="pin" className="mt-0.5 size-5 shrink-0 text-rojo" />
+              Este auto está en {site.ciudad}, {site.provincia}
+            </p>
+            <p className="mt-2 text-[15px] leading-relaxed text-stone-700">{site.traslado}</p>
+            <a
+              href={whatsappLink(`Hola, me interesa el ${titulo} pero no soy de ${site.ciudad}. Soy de ______. ¿Cómo podemos hacer con el traslado?`)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-borde mt-4 w-full"
+            >
+              Soy de otra ciudad: consultar traslado
+            </a>
+          </div>
         </aside>
       </div>
 
@@ -207,7 +216,7 @@ export default async function AutoPage({ params }: { params: Params }) {
         <section className="mt-20">
           <h2 className="titulo text-[32px]">Autos similares</h2>
           <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {similares.map((a) => <CarCard key={a.slug} auto={a} />)}
+            {similares.map((a) => <CarCard key={a.slug} auto={a} fin={fin} />)}
           </div>
         </section>
       )}

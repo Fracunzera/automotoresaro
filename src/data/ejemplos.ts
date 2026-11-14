@@ -1,45 +1,17 @@
 /**
- * Inventario de autos.
- *
- * Para publicar un auto nuevo: copiá uno de los bloques de abajo, cambiá los datos
- * y guardá. Las fotos van en /public/autos/<slug>/ (por ejemplo 1.jpg, 2.jpg...)
- * y se listan en `fotos`. Si un auto no tiene fotos se muestra una ilustración.
- *
- * IMPORTANTE: los autos y precios de este archivo son de EJEMPLO.
+ * Autos de MUESTRA, con precios inventados. Aparecen mientras no haya nada guardado.
+ * Desde el panel (/admin) se borran todos juntos con el botón "Borrar los autos de ejemplo".
  */
+import type { Auto } from "@/lib/tipos";
 
-export type Combustible = "Nafta" | "Diésel" | "GNC" | "Híbrido" | "Eléctrico";
-export type Transmision = "Manual" | "Automática";
-export type Carroceria = "Sedán" | "Hatchback" | "SUV" | "Pick-up" | "Utilitario" | "Coupé";
-
-export interface Auto {
-  /** Identificador para la URL, sin espacios ni tildes. Debe ser único. */
-  slug: string;
-  marca: string;
-  modelo: string;
-  version: string;
-  anio: number;
-  km: number;
-  /** Precio de contado en pesos. */
-  precio: number;
-  combustible: Combustible;
-  transmision: Transmision;
-  carroceria: Carroceria;
-  color: string;
-  /** Color aproximado en hexadecimal, para la ilustración cuando no hay fotos. */
-  colorHex: string;
-  puertas: number;
-  motor: string;
-  fotos: string[];
-  equipamiento: string[];
-  descripcion: string;
+type Base = Omit<Auto, "id" | "estado" | "creado" | "actualizado" | "unicoDueno" | "serviceOficial" | "destacado"> & {
   unicoDueno?: boolean;
   serviceOficial?: boolean;
   destacado?: boolean;
   reservado?: boolean;
-}
+};
 
-export const autos: Auto[] = [
+const base: Base[] = [
   {
     slug: "toyota-corolla-xei-2021",
     marca: "Toyota",
@@ -245,10 +217,16 @@ export const autos: Auto[] = [
   },
 ];
 
-export function getAuto(slug: string): Auto | undefined {
-  return autos.find((a) => a.slug === slug);
-}
+const fecha = "2026-01-01T00:00:00.000Z";
 
-export function tituloAuto(a: Auto): string {
-  return `${a.marca} ${a.modelo} ${a.version}`;
-}
+export const autosEjemplo: Auto[] = base.map(({ reservado, ...a }, i) => ({
+  ...a,
+  id: `ejemplo-${i + 1}`,
+  estado: reservado ? "reservado" : "publicado",
+  unicoDueno: !!a.unicoDueno,
+  serviceOficial: !!a.serviceOficial,
+  destacado: !!a.destacado,
+  ejemplo: true,
+  creado: fecha,
+  actualizado: fecha,
+}));

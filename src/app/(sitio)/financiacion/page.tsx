@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { site } from "@/config/site";
+import { getFinanciacion } from "@/lib/negocio";
 import { FinancingCalculator } from "@/components/FinancingCalculator";
 
 export const metadata: Metadata = {
@@ -15,8 +15,9 @@ const requisitos = [
   "Sin deudas en situación irregular",
 ];
 
-export default function FinanciacionPage() {
-  const { anticipoMinimo, plazos } = site.financiacion;
+export default async function FinanciacionPage() {
+  const fin = await getFinanciacion();
+  const { anticipoMinimo, plazos } = fin;
   return (
     <div className="contenedor pt-10">
       <p className="sobretitulo">Financiación</p>
@@ -27,7 +28,7 @@ export default function FinanciacionPage() {
 
       <div className="mt-10 grid gap-10 lg:grid-cols-[1.5fr_1fr] lg:items-start">
         <div className="rounded-lg border border-linea p-5 sm:p-7">
-          <FinancingCalculator variante="ancho" />
+          <FinancingCalculator fin={fin} variante="ancho" />
         </div>
 
         <div>

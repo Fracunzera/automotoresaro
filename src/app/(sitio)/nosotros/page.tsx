@@ -15,6 +15,7 @@ const faq = [
   ["¿Quién hace la transferencia?", "La gestionamos nosotros en el Registro Automotor. Te avisamos qué papeles traer."],
   ["¿Puedo ver el auto y probarlo?", "Sí. Escribinos por WhatsApp y coordinamos día y horario para que lo veas y lo manejes."],
   ["¿Puedo reservar un auto?", "Sí, con una seña. Consultanos las condiciones por WhatsApp."],
+  [`No soy de ${site.ciudad}, ¿cómo hago?`, `Estamos en ${site.ciudad}, ${site.provincia}. ${site.traslado}`],
 ];
 
 export default function NosotrosPage() {

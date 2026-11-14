@@ -1,10 +1,11 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { site } from "@/config/site";
+import type { Financiacion } from "@/lib/negocio-tipos";
 import { cuotaMensual, formatNumero, whatsappLink } from "@/lib/utils";
 
 type Props = {
+  fin: Financiacion;
   /** Si viene, el precio queda fijo (ficha de un auto). Si no, se puede editar. */
   precio?: number;
   tituloAuto?: string;
@@ -12,8 +13,8 @@ type Props = {
   variante?: "panel" | "ancho";
 };
 
-export function FinancingCalculator({ precio: precioFijo, tituloAuto, variante = "panel" }: Props) {
-  const { tna, anticipoMinimo, plazos } = site.financiacion;
+export function FinancingCalculator({ fin, precio: precioFijo, tituloAuto, variante = "panel" }: Props) {
+  const { tna, anticipoMinimo, plazos } = fin;
   const [precio, setPrecio] = useState(precioFijo ?? 20000000);
   const minAnticipo = Math.round(precio * anticipoMinimo);
   const [anticipo, setAnticipo] = useState(Math.round((precioFijo ?? 20000000) * 0.4));

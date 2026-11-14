@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { site } from "@/config/site";
-import { autos, type Carroceria } from "@/data/autos";
+import { getPublicos } from "@/lib/autos";
+import { getFinanciacion } from "@/lib/negocio";
+import type { Carroceria } from "@/lib/tipos";
 import { CarCard } from "@/components/CarCard";
 import { TipoIcono } from "@/components/CarImage";
 import { HeroBuscador } from "@/components/HeroBuscador";
@@ -8,8 +10,9 @@ import { Icon } from "@/components/Icon";
 
 const tipos: Carroceria[] = ["SUV", "Pick-up", "Sedán", "Hatchback", "Utilitario"];
 
-export default function Home() {
-  const disponibles = autos.filter((a) => !a.reservado);
+export default async function Home() {
+  const [autos, fin] = await Promise.all([getPublicos(), getFinanciacion()]);
+  const disponibles = autos.filter((a) => a.estado === "publicado");
   const recientes = [...disponibles].sort((a, b) => Number(!!b.destacado) - Number(!!a.destacado)).slice(0, 8);
   const marcas = Array.from(new Set(autos.map((a) => a.marca))).sort();
   const porMarca = marcas.map((m) => [m, autos.filter((a) => a.marca === m).length] as const);
@@ -23,7 +26,7 @@ export default function Home() {
       >
         {site.fotoPortada && <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/55 to-black/20" aria-hidden />}
         <div className="contenedor relative pb-14 pt-14 sm:pb-20 sm:pt-20">
-          <p className="sobretitulo">{site.nombre} · {site.ciudad}</p>
+          <p className="sobretitulo">{site.nombre} · {site.ciudad}, {site.provincia}</p>
           <h1 className="titulo mt-3 max-w-3xl text-[44px] uppercase text-white sm:text-[68px]">
             Comprá, vendé o cambiá tu auto
           </h1>
@@ -45,7 +48,7 @@ export default function Home() {
           </span>
         </Link>
         <Link href="/financiacion" className="group flex min-h-40 flex-col justify-between rounded-lg bg-tinta p-6 text-white">
-          <p className="titulo text-[30px] text-white">Hasta {Math.max(...site.financiacion.plazos)} cuotas fijas</p>
+          <p className="titulo text-[30px] text-white">Hasta {Math.max(...fin.plazos)} cuotas fijas</p>
           <span className="inline-flex items-center gap-2 text-[15px] font-semibold">
             Simulá tu cuota <Icon name="arrow" className="size-4 transition-transform group-hover:translate-x-1" />
           </span>
@@ -86,7 +89,7 @@ export default function Home() {
           <Link href="/autos" className="text-[15px] font-semibold text-rojo hover:underline">Ver los {autos.length} autos</Link>
         </div>
         <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {recientes.map((a) => <CarCard key={a.slug} auto={a} />)}
+          {recientes.map((a) => <CarCard key={a.slug} auto={a} fin={fin} />)}
         </div>
       </section>
 

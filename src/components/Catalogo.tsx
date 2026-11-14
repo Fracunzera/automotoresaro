@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import type { Auto } from "@/data/autos";
+import type { Auto } from "@/lib/tipos";
+import type { Financiacion } from "@/lib/negocio-tipos";
 import { formatNumero } from "@/lib/utils";
 import { CarCard } from "./CarCard";
 import { Icon } from "./Icon";
@@ -20,7 +21,7 @@ type Orden = "relevancia" | "precio-asc" | "precio-desc" | "anio-desc" | "km-asc
 const ordenes: Record<Orden, { label: string; fn: (a: Auto, b: Auto) => number }> = {
   relevancia: {
     label: "Más relevantes",
-    fn: (a, b) => Number(!!a.reservado) - Number(!!b.reservado) || Number(!!b.destacado) - Number(!!a.destacado),
+    fn: (a, b) => Number(a.estado === "reservado") - Number(b.estado === "reservado") || Number(!!b.destacado) - Number(!!a.destacado),
   },
   "precio-asc": { label: "Menor precio", fn: (a, b) => a.precio - b.precio },
   "precio-desc": { label: "Mayor precio", fn: (a, b) => b.precio - a.precio },
@@ -58,7 +59,7 @@ function Check({ label, n, checked, onChange }: { label: string; n: number; chec
   );
 }
 
-export function Catalogo({ autos, iniciales }: { autos: Auto[]; iniciales: FiltrosIniciales }) {
+export function Catalogo({ autos, iniciales, fin }: { autos: Auto[]; iniciales: FiltrosIniciales; fin: Financiacion }) {
   const [q, setQ] = useState(iniciales.q ?? "");
   const [marcas, setMarcas] = useState<string[]>(iniciales.marca ? [iniciales.marca] : []);
   const [tipos, setTipos] = useState<string[]>(iniciales.carroceria ? [iniciales.carroceria] : []);
@@ -232,7 +233,7 @@ export function Catalogo({ autos, iniciales }: { autos: Auto[]; iniciales: Filtr
             <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
               {resultado.map((a, i) => (
                 <FragmentoConPromo key={a.slug} mostrarPromo={i === 2}>
-                  <CarCard auto={a} />
+                  <CarCard auto={a} fin={fin} />
                 </FragmentoConPromo>
               ))}
             </div>

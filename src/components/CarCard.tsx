@@ -1,12 +1,14 @@
 import Link from "next/link";
-import type { Auto } from "@/data/autos";
+import type { Auto } from "@/lib/tipos";
+import type { Financiacion } from "@/lib/negocio-tipos";
 import { site } from "@/config/site";
+import { Icon } from "./Icon";
 import { cuotaMensual, formatKm, formatNumero } from "@/lib/utils";
 import { CarImage } from "./CarImage";
 
 /** Etiqueta principal que se muestra sobre la foto (una sola, como en los portales grandes). */
 function etiqueta(a: Auto): { texto: string; clase: string } | null {
-  if (a.reservado) return { texto: "Reservado", clase: "bg-tinta text-white" };
+  if (a.estado === "reservado") return { texto: "Reservado", clase: "bg-tinta text-white" };
   if (a.unicoDueno) return { texto: "Único dueño", clase: "bg-white text-tinta" };
   if (a.serviceOficial) return { texto: "Services oficiales", clase: "bg-white text-tinta" };
   return null;
@@ -21,8 +23,8 @@ export function Precio({ valor, className = "" }: { valor: number; className?: s
   );
 }
 
-export function CarCard({ auto }: { auto: Auto }) {
-  const { tna, anticipoMinimo, plazos } = site.financiacion;
+export function CarCard({ auto, fin }: { auto: Auto; fin: Financiacion }) {
+  const { tna, anticipoMinimo, plazos } = fin;
   const plazoMax = Math.max(...plazos);
   const cuota = cuotaMensual(auto.precio * (1 - anticipoMinimo), plazoMax, tna);
   const tag = etiqueta(auto);
@@ -33,7 +35,7 @@ export function CarCard({ auto }: { auto: Auto }) {
       className="group flex flex-col overflow-hidden rounded-lg border border-linea bg-white transition-shadow hover:shadow-[0_6px_24px_rgba(0,0,0,0.09)]"
     >
       <div className="relative">
-        <CarImage auto={auto} className={`aspect-[4/3] ${auto.reservado ? "opacity-70" : ""}`} />
+        <CarImage auto={auto} className={`aspect-[4/3] ${auto.estado === "reservado" ? "opacity-70" : ""}`} />
         {tag && (
           <span className={`absolute bottom-3 left-3 rounded-sm px-2 py-1 text-xs font-semibold shadow-sm ${tag.clase}`}>
             {tag.texto}
@@ -58,10 +60,11 @@ export function CarCard({ auto }: { auto: Auto }) {
         </p>
       </div>
 
-      <div className="mx-4 mt-auto flex gap-4 border-t border-linea py-2.5 text-[13px] text-stone-500">
-        <span>{auto.transmision}</span>
-        <span>{auto.combustible}</span>
-        <span>{auto.carroceria}</span>
+      <div className="mx-4 mt-auto flex items-center justify-between gap-3 border-t border-linea py-2.5 text-[13px] text-stone-500">
+        <span>{auto.transmision} · {auto.combustible}</span>
+        <span className="flex items-center gap-1 whitespace-nowrap">
+          <Icon name="pin" className="size-4" /> {site.ciudad}
+        </span>
       </div>
     </Link>
   );

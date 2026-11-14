@@ -1,5 +1,5 @@
 import Image from "next/image";
-import type { Auto, Carroceria } from "@/data/autos";
+import type { Auto, Carroceria } from "@/lib/tipos";
 
 /** Perfil lateral de cada tipo de carrocería (viewBox 0 0 225 100). */
 export const siluetas: Record<Carroceria, string> = {

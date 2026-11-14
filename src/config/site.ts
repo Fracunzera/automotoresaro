@@ -15,21 +15,21 @@ export const site = {
   telefono: "+54 9 11 0000-0000", // TODO
   email: "ventas@automotoresaro.com.ar", // TODO
   direccion: "Av. Siempreviva 742", // TODO
-  ciudad: "Buenos Aires", // TODO
+  ciudad: "Río Gallegos",
+  provincia: "Santa Cruz",
   // Link a Google Maps (buscá la agencia en Maps > Compartir > Copiar link)
-  mapa: "https://maps.google.com/?q=Av.+Siempreviva+742+Buenos+Aires", // TODO
+  mapa: "https://maps.google.com/?q=R%C3%ADo+Gallegos+Santa+Cruz", // TODO: link exacto de la agencia
+
+  // Aviso para compradores de otras ciudades (se muestra en cada auto y en preguntas frecuentes)
+  traslado:
+    "Si sos de otra ciudad, podés venir a buscarlo o coordinar el traslado en camión (el costo corre por cuenta del comprador). Escribinos y lo vemos juntos.",
   // Foto de portada (opcional). Poné una foto de la agencia o del playón en /public/portada.jpg
   // y escribí acá "/portada.jpg". Vacío = fondo negro.
   fotoPortada: "" as string,
   horarios: "Lunes a viernes 9 a 19 h · Sábados 9 a 13 h",
   instagram: "https://instagram.com/", // TODO
 
-  // Simulador de financiación (valores de referencia: ajustar con la financiera real)
-  financiacion: {
-    tna: 0.55, // Tasa Nominal Anual (55%)
-    anticipoMinimo: 0.3, // 30% del valor del auto
-    plazos: [12, 18, 24, 36, 48],
-  },
+  // La financiación (tasa, anticipo, cuotas) y las comisiones se cambian desde el panel: /admin/ajustes
 
   // Beneficios que se muestran en la home y en cada ficha.
   // Dejar solo los que el negocio realmente ofrece.

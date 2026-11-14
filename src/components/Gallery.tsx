@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { Auto } from "@/data/autos";
+import type { Auto } from "@/lib/tipos";
 import { CarImage } from "./CarImage";
 import { Icon } from "./Icon";
 

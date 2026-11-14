@@ -66,3 +66,20 @@ body {
 summary::-webkit-details-marker {
   display: none;
 }
+
+/* ───── Panel: todo más grande y con más contraste ───── */
+@utility campo-g {
+  @apply h-14 w-full rounded-md border-2 border-stone-300 bg-white px-4 text-lg text-tinta outline-none transition-colors placeholder:text-stone-400 focus:border-tinta;
+}
+@utility etiqueta-g {
+  @apply mb-2 block text-lg font-semibold text-tinta;
+}
+@utility ayuda-g {
+  @apply mt-1.5 text-base text-stone-600;
+}
+@utility btn-g {
+  @apply inline-flex min-h-14 items-center justify-center gap-2 rounded-md px-6 text-lg font-semibold transition-colors focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-rojo disabled:opacity-50;
+}
+@utility tarjeta-g {
+  @apply rounded-lg border-2 border-linea bg-white;
+}
