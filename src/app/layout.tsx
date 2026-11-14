@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import { site } from "@/config/site";
 import { getAgencia } from "@/lib/agencia";
+import { cssTema } from "@/lib/agencia-tipos";
 import { AgenciaProvider } from "@/components/AgenciaContext";
 import { barlow, barlowCondensed } from "./fonts";
 import "./globals.css";
@@ -9,8 +9,8 @@ export async function generateMetadata(): Promise<Metadata> {
   const ag = await getAgencia();
   return {
     title: { default: `${ag.nombre} | Autos usados en ${ag.ciudad}`, template: `%s | ${ag.nombre}` },
-    description: site.descripcion,
-    openGraph: { title: ag.nombre, description: site.descripcion, locale: "es_AR", type: "website" },
+    description: ag.marca.descripcion,
+    openGraph: { title: ag.nombre, description: ag.marca.descripcion, locale: "es_AR", type: "website" },
   };
 }
 
@@ -18,6 +18,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const agencia = await getAgencia();
   return (
     <html lang="es-AR" className={`${barlow.variable} ${barlowCondensed.variable}`}>
+      <head>
+        {/* Colores de la marca (se eligen en Panel → Ajustes → Marca y portada) */}
+        <style dangerouslySetInnerHTML={{ __html: cssTema(agencia.marca) }} />
+      </head>
       <body className="flex min-h-screen flex-col font-sans antialiased">
         <AgenciaProvider agencia={agencia}>{children}</AgenciaProvider>
       </body>

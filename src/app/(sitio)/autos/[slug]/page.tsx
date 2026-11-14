@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { getAgencia } from "@/lib/agencia";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { site } from "@/config/site";
 import { getPorSlug, getPublicos, tituloAuto } from "@/lib/autos";
 import { getFinanciacion } from "@/lib/negocio";
 import { cuotaMensual, formatKm, formatNumero, formatPrecio, whatsappLink } from "@/lib/utils";
@@ -190,7 +189,7 @@ export default async function AutoPage({ params }: { params: Params }) {
             </div>
 
             <ul className="mt-5 space-y-2.5 border-t border-linea pt-4 text-sm text-stone-700">
-              {site.beneficios.map((b) => (
+              {ag.marca.beneficios.map((b) => (
                 <li key={b.titulo} className="flex items-start gap-2.5">
                   <Icon name={b.icono} className="mt-px size-5 shrink-0 text-stone-400" /> {b.titulo}
                 </li>

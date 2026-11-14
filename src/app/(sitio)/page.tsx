@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { getAgencia } from "@/lib/agencia";
 import { linkMapa, telLink } from "@/lib/agencia-tipos";
-import { site } from "@/config/site";
 import { getPublicos } from "@/lib/autos";
 import { getFinanciacion } from "@/lib/negocio";
 import type { Carroceria } from "@/lib/tipos";
@@ -24,16 +23,16 @@ export default async function Home() {
       {/* PORTADA */}
       <section
         className="relative bg-tinta bg-cover bg-center text-white"
-        style={site.fotoPortada ? { backgroundImage: `url(${site.fotoPortada})` } : undefined}
+        style={ag.marca.portadaFoto ? { backgroundImage: `url(${ag.marca.portadaFoto})` } : undefined}
       >
-        {site.fotoPortada && <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/55 to-black/20" aria-hidden />}
+        {ag.marca.portadaFoto && <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/55 to-black/20" aria-hidden />}
         <div className="contenedor relative pb-14 pt-14 sm:pb-20 sm:pt-20">
           <p className="sobretitulo">{ag.nombre} · {ag.ciudad}, {ag.provincia}</p>
           <h1 className="titulo mt-3 max-w-3xl text-[44px] uppercase text-white sm:text-[68px]">
-            Comprá, vendé o cambiá tu auto
+            {ag.marca.portadaTitulo}
           </h1>
           <p className="mt-4 max-w-xl text-lg text-stone-300">
-            {disponibles.length} autos usados revisados, listos para transferir. Financiación y tomamos tu usado.
+            {disponibles.length} autos disponibles. {ag.marca.eslogan}
           </p>
           <div className="mt-8">
             <HeroBuscador marcas={marcas} />
@@ -144,7 +143,7 @@ export default async function Home() {
       <section className="contenedor mt-20">
         <h2 className="titulo text-[32px]">Cómo trabajamos</h2>
         <div className="mt-6 grid gap-x-8 gap-y-8 sm:grid-cols-2 lg:grid-cols-4">
-          {site.beneficios.map((b) => (
+          {ag.marca.beneficios.map((b) => (
             <div key={b.titulo} className="border-t-[3px] border-tinta pt-4">
               <h3 className="text-lg font-semibold">{b.titulo}</h3>
               <p className="mt-2 text-[15px] leading-relaxed text-stone-600">{b.texto}</p>

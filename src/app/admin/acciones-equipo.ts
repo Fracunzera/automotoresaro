@@ -1,8 +1,8 @@
 "use server";
 
 import { cookies } from "next/headers";
-import { guardarAgencia } from "@/lib/agencia";
-import { normalizarWhatsapp, type Agencia } from "@/lib/agencia-tipos";
+import { getAgencia, guardarAgencia } from "@/lib/agencia";
+import { ICONOS_BENEFICIO, colorValido, normalizarWhatsapp, type Agencia, type Marca } from "@/lib/agencia-tipos";
 import { COOKIE_SESION, DURACION_SESION_SEG, crearToken } from "@/lib/sesion";
 import {
   ROL_TEXTO, borrarEmpleado, cambiarPassword, cambiarPasswordPropia, crearEmpleado, actualizarEmpleado,
@@ -31,7 +31,9 @@ export async function guardarAgenciaAccion(d: Record<string, unknown>): Promise<
   try {
     await requerirUsuario("admin");
     const legal = (d.legal ?? {}) as Record<string, unknown>;
+    const actual = await getAgencia();
     const a: Agencia = {
+      ...actual,
       nombre: texto(d.nombre, 60),
       whatsapp: normalizarWhatsapp(texto(d.whatsapp, 30)),
       telefono: texto(d.telefono, 40),
@@ -51,6 +53,41 @@ export async function guardarAgenciaAccion(d: Record<string, unknown>): Promise<
     if (!a.direccion || !a.ciudad) return { ok: false, error: "Falta la dirección o la ciudad." };
     await guardarAgencia(a);
     return { ok: true, mensaje: "Listo, se guardaron los datos. La página ya los muestra." };
+  } catch (e) {
+    return { ok: false, error: msgError(e) };
+  }
+}
+
+/* ───────────── Marca y portada ───────────── */
+
+const imagenPropia = (v: unknown) => {
+  const t = texto(v, 500);
+  return t.startsWith("/api/fotos/") || /^https:\/\/[^/]+\.public\.blob\.vercel-storage\.com\//.test(t) || t.startsWith("/") ? t : "";
+};
+
+export async function guardarMarcaAccion(d: Record<string, unknown>): Promise<Resultado> {
+  try {
+    await requerirUsuario("admin");
+    const iconos = ICONOS_BENEFICIO.map((i) => i.id);
+    const beneficios = (Array.isArray(d.beneficios) ? d.beneficios : [])
+      .map((b) => b as Record<string, unknown>)
+      .map((b) => ({ titulo: texto(b.titulo, 60), texto: texto(b.texto, 200), icono: iconos.includes(String(b.icono)) ? String(b.icono) : "check" }))
+      .filter((b) => b.titulo)
+      .slice(0, 6);
+    const m: Marca = {
+      colorPrincipal: colorValido(String(d.colorPrincipal)) ? String(d.colorPrincipal) : "#d12b1f",
+      colorOscuro: colorValido(String(d.colorOscuro)) ? String(d.colorOscuro) : "#15171a",
+      logo: imagenPropia(d.logo),
+      eslogan: texto(d.eslogan, 160),
+      descripcion: texto(d.descripcion, 300),
+      portadaTitulo: texto(d.portadaTitulo, 80),
+      portadaFoto: imagenPropia(d.portadaFoto),
+      beneficios,
+    };
+    if (!m.portadaTitulo) return { ok: false, error: "Escribí el título de la portada." };
+    const actual = await getAgencia();
+    await guardarAgencia({ ...actual, marca: m });
+    return { ok: true, mensaje: "Listo, se guardó la marca. La página ya se ve con los cambios." };
   } catch (e) {
     return { ok: false, error: msgError(e) };
   }

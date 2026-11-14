@@ -17,7 +17,18 @@ const nav = [
 ];
 
 export function Logo({ claro = false }: { claro?: boolean }) {
-  const palabras = useAgencia().nombre.trim().split(/\s+/);
+  const ag = useAgencia();
+  if (ag.marca.logo) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={ag.marca.logo}
+        alt={ag.nombre}
+        className={`h-9 w-auto max-w-[200px] object-contain sm:h-10 ${claro ? "rounded-md bg-white px-2 py-1" : ""}`}
+      />
+    );
+  }
+  const palabras = ag.nombre.trim().split(/\s+/);
   const ultima = palabras.pop();
   return (
     <span className={`flex items-baseline gap-1.5 font-display text-[21px] font-extrabold sm:text-[25px] uppercase leading-none tracking-tight ${claro ? "text-white" : "text-tinta"}`}>

@@ -107,6 +107,32 @@ sudo certbot --nginx -d TUDOMINIO.com.ar -d www.TUDOMINIO.com.ar   # HTTPS grati
 
 Mandar mails directo desde un VPS casi siempre termina en spam. Conviene un proveedor SMTP (Brevo tiene un plan gratis de 300 mails por día; también Resend o Amazon SES) y **verificar el dominio** ahí: el proveedor te da registros **SPF** y **DKIM** para cargar en el DNS del dominio. Después se completan las variables `SMTP_*` y `MAIL_FROM` (ej. `ventas@tudominio.com.ar`).
 
+## Vender el sistema a otras agencias (o tiendas)
+
+Cada cliente tiene **su propia página**: su dominio, su marca y sus datos, totalmente separados de los demás. Todas corren en tu VPS, cada una en su carpeta y en su puerto.
+
+**Dar de alta un cliente nuevo** (el dominio ya tiene que apuntar a la IP del VPS):
+
+```bash
+sudo CERTBOT_EMAIL=vos@mail.com deploy/nueva-agencia.sh lopez autoslopez.com.ar 3001 autos
+```
+
+- Para una **tienda online** en vez de agencia: último parámetro `tienda`.
+- Agregá `--simular` al final para ver todos los pasos sin cambiar nada.
+- Crea `/opt/agencias/<nombre>` (copia del sistema) y `/var/lib/agencias/<nombre>` (sus datos), genera una contraseña inicial, lo deja prendido con PM2, lo publica en nginx y saca el certificado HTTPS. Al final muestra usuario y contraseña para pasarle al cliente.
+- Si el repositorio es privado, el VPS necesita acceso (una *deploy key* de GitHub de solo lectura).
+- Cada cliente personaliza todo desde **su** panel: **Ajustes → Marca y portada** (colores, logo, foto y textos de la portada, beneficios), **Datos del negocio**, **Empleados**, **Comisiones**.
+
+**Actualizar a todos** cuando mejorás el sistema (`git push` a la rama y después):
+
+```bash
+sudo deploy/actualizar-todas.sh
+```
+
+Compila cada una en una carpeta aparte y recién si sale bien la reemplaza, así la página no se corta. Si una falla, queda como estaba.
+
+Cada instalación usa unos 400 MB de disco y 150–250 MB de memoria: un VPS de 4 GB alcanza para unas 10 a 15.
+
 ## Hoja de ruta (próximas etapas)
 
 - **Registro de consultas** (leads) además de WhatsApp, para hacer seguimiento.

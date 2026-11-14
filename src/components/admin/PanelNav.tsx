@@ -14,7 +14,7 @@ const links: Item[] = [
   { href: "/admin/consultas", label: "Consultas" },
   { href: "/admin/clientes", label: "Clientes" },
   { href: "/admin/mails", label: "Mails", soloAdmin: true },
-  { href: "/admin/configuracion", label: "Ajustes", soloAdmin: true, tambien: ["/admin/ajustes", "/admin/agencia", "/admin/empleados", "/admin/mi-cuenta"] },
+  { href: "/admin/configuracion", label: "Ajustes", soloAdmin: true, tambien: ["/admin/ajustes", "/admin/agencia", "/admin/marca", "/admin/empleados", "/admin/mi-cuenta"] },
   { href: "/admin/mi-cuenta", label: "Mi contraseña", soloVendedor: true },
 ];
 

@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { site } from "@/config/site";
 import { getAgencia } from "@/lib/agencia";
 import { linkMapa, telLink } from "@/lib/agencia-tipos";
 import { whatsappLink } from "@/lib/utils";
@@ -12,7 +11,7 @@ export async function Footer() {
       <div className="contenedor grid gap-10 py-14 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
         <div>
           <Logo claro />
-          <p className="mt-5 max-w-xs text-[15px] leading-relaxed">{site.descripcion}</p>
+          <p className="mt-5 max-w-xs text-[15px] leading-relaxed">{ag.marca.descripcion}</p>
         </div>
         <div>
           <h3 className="font-display text-sm font-semibold tracking-[0.12em] text-white uppercase">Autos</h3>

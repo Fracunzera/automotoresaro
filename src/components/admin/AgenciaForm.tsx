@@ -32,7 +32,7 @@ export function AgenciaForm({ inicial }: { inicial: Agencia }) {
   const [guardando, start] = useTransition();
   const wa = normalizarWhatsapp(waTexto);
 
-  const campo = (k: Exclude<keyof Agencia, "legal">, label: string, extra: { ayuda?: string; placeholder?: string; type?: string } = {}) => (
+  const campo = (k: Exclude<keyof Agencia, "legal" | "marca">, label: string, extra: { ayuda?: string; placeholder?: string; type?: string } = {}) => (
     <div>
       <label htmlFor={k} className="etiqueta-g">{label}</label>
       <input
