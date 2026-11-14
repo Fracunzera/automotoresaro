@@ -39,11 +39,16 @@ function Seccion({ n, titulo, ayuda, children }: { n: number; titulo: string; ay
   );
 }
 
-export function AutoForm({ auto, negocioInicial, ajustes, esAdmin }: { auto?: Auto; negocioInicial: NegocioAuto; ajustes: Ajustes; esAdmin: boolean }) {
+export function AutoForm({
+  auto, negocioInicial, ajustes, esAdmin, datosIniciales,
+}: { auto?: Auto; negocioInicial: NegocioAuto; ajustes: Ajustes; esAdmin: boolean; datosIniciales?: Partial<DatosAuto> }) {
   const router = useRouter();
-  const [d, setD] = useState<DatosAuto>(() => (auto ? { ...VACIO, ...auto } : VACIO));
+  const [d, setD] = useState<DatosAuto>(() => (auto ? { ...VACIO, ...auto } : { ...VACIO, ...datosIniciales }));
   const [neg, setNeg] = useState<NegocioAuto>(negocioInicial);
-  const [marcaOtra, setMarcaOtra] = useState(() => !!auto && !MARCAS_COMUNES.includes(auto.marca));
+  const [marcaOtra, setMarcaOtra] = useState(() => {
+    const m = auto?.marca ?? datosIniciales?.marca;
+    return !!m && !MARCAS_COMUNES.includes(m);
+  });
   const [extra, setExtra] = useState("");
   const [error, setError] = useState("");
   const [cambios, setCambios] = useState(false);

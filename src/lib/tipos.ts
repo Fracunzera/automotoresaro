@@ -67,6 +67,14 @@ export const MARCAS_COMUNES = [
   "Toyota", "Volkswagen",
 ];
 
+const simple = (t: string) => t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]/g, "");
+/** "volkswagen", "VW" → "Volkswagen" si es una marca conocida; si no, la deja con mayúscula inicial. */
+export function marcaConocida(m: string): string {
+  const t = m.trim();
+  const conocida = MARCAS_COMUNES.find((x) => simple(x) === simple(t)) ?? (simple(t) === "vw" ? "Volkswagen" : null);
+  return conocida ?? t.charAt(0).toUpperCase() + t.slice(1);
+}
+
 export const COLORES: { nombre: string; hex: string }[] = [
   { nombre: "Blanco", hex: "#f5f5f4" },
   { nombre: "Negro", hex: "#141414" },

@@ -11,13 +11,14 @@ const links: Item[] = [
   { href: "/admin", label: "Inicio", exacto: true },
   { href: "/admin/autos", label: "Mis autos" },
   { href: "/admin/autos/nuevo", label: "Cargar auto", exacto: true },
+  { href: "/admin/consultas", label: "Consultas" },
   { href: "/admin/clientes", label: "Clientes" },
   { href: "/admin/mails", label: "Mails", soloAdmin: true },
   { href: "/admin/configuracion", label: "Ajustes", soloAdmin: true, tambien: ["/admin/ajustes", "/admin/agencia", "/admin/empleados", "/admin/mi-cuenta"] },
   { href: "/admin/mi-cuenta", label: "Mi contraseña", soloVendedor: true },
 ];
 
-export function PanelNav({ nombreUsuario, esAdmin }: { nombreUsuario: string; esAdmin: boolean }) {
+export function PanelNav({ nombreUsuario, esAdmin, consultasNuevas }: { nombreUsuario: string; esAdmin: boolean; consultasNuevas: number }) {
   const path = usePathname();
   const { nombre } = useAgencia();
   const visibles = links.filter((l) => (l.soloAdmin ? esAdmin : l.soloVendedor ? !esAdmin : true));
@@ -54,6 +55,11 @@ export function PanelNav({ nombreUsuario, esAdmin }: { nombreUsuario: string; es
             }`}
           >
             {l.label}
+            {l.href === "/admin/consultas" && consultasNuevas > 0 && (
+              <span className="ml-1.5 inline-grid min-w-6 place-items-center rounded-full bg-rojo px-1.5 text-sm font-bold text-white" aria-label={`${consultasNuevas} nuevas`}>
+                {consultasNuevas}
+              </span>
+            )}
           </Link>
         ))}
       </nav>

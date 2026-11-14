@@ -3,6 +3,7 @@ import { getTodos } from "@/lib/autos";
 import { leerNegocio } from "@/lib/negocio";
 import { leerClientes } from "@/lib/clientes";
 import { usuarioActual } from "@/lib/usuarios";
+import { contarNuevas } from "@/lib/consultas";
 import { MODO_COMISION_TEXTO, calcularGanancia, completarNegocio, diasParaVencer } from "@/lib/negocio-tipos";
 import { formatNumero } from "@/lib/utils";
 import { BotonBorrarEjemplos } from "@/components/admin/BotonBorrarEjemplos";
@@ -23,7 +24,7 @@ function Dato({ titulo, valor, detalle }: { titulo: string; valor: string; detal
 type SP = Promise<Record<string, string | string[] | undefined>>;
 
 export default async function Tablero({ searchParams }: { searchParams: SP }) {
-  const [autos, negocio, clientes, yo, sp] = await Promise.all([getTodos(), leerNegocio(), leerClientes(), usuarioActual(), searchParams]);
+  const [autos, negocio, clientes, yo, sp, consultasNuevas] = await Promise.all([getTodos(), leerNegocio(), leerClientes(), usuarioActual(), searchParams, contarNuevas()]);
   const esAdmin = yo?.rol === "admin";
   const { ajustes } = negocio;
   const n = (id: string) => negocio.autos[id];
@@ -115,6 +116,15 @@ export default async function Tablero({ searchParams }: { searchParams: SP }) {
         <p role="alert" className="rounded-lg border-2 border-rojo bg-rojo-claro p-4 text-lg font-semibold text-rojo-oscuro">
           Esa sección es solo para administradores.
         </p>
+      )}
+
+      {consultasNuevas > 0 && (
+        <Link href="/admin/consultas" className="block rounded-lg bg-rojo p-5 text-white transition-colors hover:bg-rojo-oscuro">
+          <p className="text-2xl font-bold">
+            {consultasNuevas === 1 ? "Tenés 1 consulta nueva" : `Tenés ${consultasNuevas} consultas nuevas`} de gente que quiere vender su auto
+          </p>
+          <p className="mt-1 text-lg">Tocá acá para verlas y contactarlas →</p>
+        </Link>
       )}
 
       {/* Accesos directos */}
