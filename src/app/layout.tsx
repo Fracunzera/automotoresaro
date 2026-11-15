@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { getAgencia } from "@/lib/agencia";
 import { cssTema } from "@/lib/agencia-tipos";
+import { esTienda } from "@/lib/rubro";
 import { AgenciaProvider } from "@/components/AgenciaContext";
 import { barlow, barlowCondensed } from "./fonts";
 import "./globals.css";
@@ -8,7 +9,7 @@ import "./globals.css";
 export async function generateMetadata(): Promise<Metadata> {
   const ag = await getAgencia();
   return {
-    title: { default: `${ag.nombre} | Autos usados en ${ag.ciudad}`, template: `%s | ${ag.nombre}` },
+    title: { default: `${ag.nombre} | ${esTienda ? "Tienda online" : "Autos usados"} en ${ag.ciudad}`, template: `%s | ${ag.nombre}` },
     description: ag.marca.descripcion,
     openGraph: { title: ag.nombre, description: ag.marca.descripcion, locale: "es_AR", type: "website" },
   };
