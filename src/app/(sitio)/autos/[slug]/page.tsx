@@ -11,6 +11,7 @@ import { FinancingCalculator } from "@/components/FinancingCalculator";
 import { Gallery } from "@/components/Gallery";
 import { Icon, WhatsAppIcon } from "@/components/Icon";
 import { BotonFavorito } from "@/components/cuenta/ClienteContext";
+import { AgendarVisita } from "@/components/AgendarVisita";
 
 type Params = Promise<{ slug: string }>;
 
@@ -176,14 +177,7 @@ export default async function AutoPage({ params }: { params: Params }) {
               >
                 <WhatsAppIcon className="size-5" /> Me interesa este auto
               </a>
-              <a
-                href={whatsappLink(ag.whatsapp, `Hola, quiero coordinar una visita y prueba de manejo del ${titulo}. ¿Qué días y horarios tienen?`)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn-borde w-full"
-              >
-                <Icon name="calendar" className="size-5" /> Agendar visita y prueba de manejo
-              </a>
+              {auto.estado === "publicado" && <AgendarVisita autoId={auto.id} titulo={titulo} />}
               <BotonFavorito autoId={auto.id} conTexto className="btn-borde w-full" />
             </div>
 

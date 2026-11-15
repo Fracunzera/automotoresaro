@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { borrarAutoAccion, cambiarEstadoAuto, retirarAuto, type Comprador } from "@/app/admin/acciones";
+import { borrarAutoAccion, cambiarEstadoAuto, pagoDuenoAccion, retirarAuto, type Comprador } from "@/app/admin/acciones";
 import { MOTIVO_RETIRO_TEXTO, type MotivoRetiro } from "@/lib/negocio-tipos";
 import type { Auto, Estado } from "@/lib/tipos";
 import { ESTADO_TEXTO } from "@/lib/tipos";
@@ -23,6 +23,7 @@ export type FilaAuto = {
   consignacion: boolean;
   venceEn: number | null;
   retiro: { texto: string; cobrado: number } | null;
+  pagoDueno: { monto: number; fecha: string } | null;
   sugerido: Record<MotivoRetiro, number>;
 };
 
@@ -47,6 +48,8 @@ export function ListaAutos({ filas, esAdmin }: { filas: FilaAuto[]; esAdmin: boo
   const [retirando, setRetirando] = useState<FilaAuto | null>(null);
   const [motivo, setMotivo] = useState<MotivoRetiro | "">("");
   const [cobrado, setCobrado] = useState(0);
+  const [pagando, setPagando] = useState<FilaAuto | null>(null);
+  const [montoDueno, setMontoDueno] = useState(0);
 
   const titulo = (a: Auto) => `${a.marca} ${a.modelo} ${a.anio}`;
 
@@ -69,7 +72,7 @@ export function ListaAutos({ filas, esAdmin }: { filas: FilaAuto[]; esAdmin: boo
       {error && <p role="alert" className="mt-5 rounded-lg bg-rojo-claro p-4 text-lg font-semibold text-rojo-oscuro">{error}</p>}
 
       <ul className="mt-5 space-y-4">
-        {filas.map((fila) => { const { auto: a, tipo, dueno, ganancia, alDueno, precioVenta: vendidoA, interesados, venceEn, retiro, consignacion } = fila; return (
+        {filas.map((fila) => { const { auto: a, tipo, dueno, ganancia, alDueno, precioVenta: vendidoA, interesados, venceEn, retiro, consignacion, pagoDueno } = fila; return (
           <li key={a.id} className="tarjeta-g overflow-hidden">
             <div className="flex gap-4 p-4">
               <Link href={`/admin/autos/${a.id}`} className="w-28 shrink-0 sm:w-40">
@@ -114,6 +117,22 @@ export function ListaAutos({ filas, esAdmin }: { filas: FilaAuto[]; esAdmin: boo
               )}
               {retiro && (
                 <p>{retiro.texto}{retiro.cobrado > 0 && <> · cobraste <b>{pesos(retiro.cobrado)}</b></>}</p>
+              )}
+              {a.estado === "vendido" && tipo === "consignacion" && (
+                pagoDueno ? (
+                  <p className="mt-1 font-semibold text-[#17733c]">✓ Le pagaste {pesos(pagoDueno.monto)} al dueño el {new Date(pagoDueno.fecha).toLocaleDateString("es-AR")}</p>
+                ) : (
+                  <div className="mt-2 rounded-md border-2 border-[#e6c35c] bg-[#fff8e1] p-3">
+                    <p className="font-semibold">Falta pagarle al dueño{alDueno !== null && <>: {pesos(alDueno)}</>}</p>
+                    <button
+                      disabled={cargando}
+                      onClick={() => { setMontoDueno(alDueno ?? 0); setPagando(fila); }}
+                      className="btn-g mt-2 w-full bg-[#17733c] text-white hover:bg-[#125e31]"
+                    >
+                      Ya le pagué al dueño
+                    </button>
+                  </div>
+                )
               )}
             </div>}
 
@@ -177,7 +196,7 @@ export function ListaAutos({ filas, esAdmin }: { filas: FilaAuto[]; esAdmin: boo
         >
           <div className="mt-4">
             <CampoPesos id="precio-venta" label="Precio final de venta" valor={precioVenta} onChange={setPrecioVenta} />
-            <p className="ayuda-g">El auto deja de aparecer en la página y la venta se suma al resumen del mes.</p>
+            <p className="ayuda-g">El auto deja de aparecer en la página y la venta se suma al resumen del mes.{vendiendo && filas.find((f) => f.auto.id === vendiendo.id)?.tipo === "consignacion" ? " Después, cuando le transfieras al dueño su parte, anotalo con “Ya le pagué al dueño” en Vendidos." : ""}</p>
           </div>
           <details className="mt-4 rounded-md border-2 border-linea">
             <summary className="cursor-pointer list-none p-4 text-lg font-semibold">+ Guardar los datos del comprador (opcional)</summary>
@@ -233,6 +252,22 @@ export function ListaAutos({ filas, esAdmin }: { filas: FilaAuto[]; esAdmin: boo
               </div>
             )}
             {error && <p role="alert" className="text-lg font-semibold text-rojo-oscuro">{error}</p>}
+          </div>
+        </Confirmar>
+      )}
+
+      {pagando && (
+        <Confirmar
+          titulo={`Pago al dueño del ${titulo(pagando.auto)}`}
+          texto={pagando.dueno ? `¿Cuánto le transferiste a ${pagando.dueno}?` : "¿Cuánto le transferiste al dueño?"}
+          confirmar="Guardar pago"
+          cargando={cargando}
+          onCancelar={() => setPagando(null)}
+          onConfirmar={() => ejecutar(() => pagoDuenoAccion(pagando.auto.id, montoDueno), () => setPagando(null))}
+        >
+          <div className="mt-4">
+            <CampoPesos id="monto-dueno" label="Monto que le pagaste" valor={montoDueno} onChange={setMontoDueno} />
+            <p className="ayuda-g">Es el precio de venta menos la comisión. Corregilo si hubo algún gasto acordado.</p>
           </div>
         </Confirmar>
       )}

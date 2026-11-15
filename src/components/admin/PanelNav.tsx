@@ -26,13 +26,14 @@ const links: Item[] = esTienda
   { href: "/admin/autos", label: "Mis autos" },
   { href: "/admin/autos/nuevo", label: "Cargar auto", exacto: true },
   { href: "/admin/consultas", label: "Para publicar" },
+  { href: "/admin/agenda", label: "Agenda" },
   { href: "/admin/clientes", label: "Clientes" },
   { href: "/admin/mails", label: "Mails", soloAdmin: true },
   { href: "/admin/configuracion", label: "Ajustes", soloAdmin: true, tambien: AJUSTES },
   { href: "/admin/mi-cuenta", label: "Mi contraseña", soloVendedor: true },
 ];
 
-export function PanelNav({ nombreUsuario, esAdmin, consultasNuevas }: { nombreUsuario: string; esAdmin: boolean; consultasNuevas: number }) {
+export function PanelNav({ nombreUsuario, esAdmin, consultasNuevas, visitasPendientes = 0 }: { nombreUsuario: string; esAdmin: boolean; consultasNuevas: number; visitasPendientes?: number }) {
   const conNumero = esTienda ? "/admin/pedidos" : "/admin/consultas";
   const path = usePathname();
   const { nombre } = useAgencia();
@@ -70,6 +71,11 @@ export function PanelNav({ nombreUsuario, esAdmin, consultasNuevas }: { nombreUs
             }`}
           >
             {l.label}
+            {l.href === "/admin/agenda" && visitasPendientes > 0 && (
+              <span className="ml-1.5 inline-grid min-w-6 place-items-center rounded-full bg-rojo px-1.5 text-sm font-bold text-white" aria-label={`${visitasPendientes} sin confirmar`}>
+                {visitasPendientes}
+              </span>
+            )}
             {l.href === conNumero && consultasNuevas > 0 && (
               <span className="ml-1.5 inline-grid min-w-6 place-items-center rounded-full bg-rojo px-1.5 text-sm font-bold text-white" aria-label={`${consultasNuevas} nuevas`}>
                 {consultasNuevas}

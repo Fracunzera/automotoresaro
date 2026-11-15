@@ -4,7 +4,7 @@ import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { actualizarAuto, borrarAuto, borrarEjemplos, cambiarEstado, crearAuto } from "@/lib/autos";
 import { usaNube } from "@/lib/almacen";
-import { borrarNegocioAuto, guardarAjustes, guardarNegocioAuto, registrarRetiro, registrarVenta } from "@/lib/negocio";
+import { borrarNegocioAuto, guardarAjustes, guardarNegocioAuto, registrarPagoDueno, registrarRetiro, registrarVenta } from "@/lib/negocio";
 import { PAPELES, type Ajustes, type ModoComision, type MotivoRetiro, type NegocioAuto } from "@/lib/negocio-tipos";
 import { emailValido, normalizarEmail, registrarCompra } from "@/lib/clientes";
 import { marcarPublicada } from "@/lib/consultas";
@@ -155,7 +155,7 @@ function validarNegocio(d: Record<string, unknown>): NegocioAuto {
 
 /** Al editar un auto no se pierden los datos de venta o retiro ya registrados. */
 const conservarVenta = (n: NegocioAuto | undefined) =>
-  n ? { precioVenta: n.precioVenta, fechaVenta: n.fechaVenta, vendidoPor: n.vendidoPor, retiro: n.retiro } : {};
+  n ? { precioVenta: n.precioVenta, fechaVenta: n.fechaVenta, vendidoPor: n.vendidoPor, retiro: n.retiro, pagoDueno: n.pagoDueno } : {};
 
 /* ───────────── Autos ───────────── */
 
@@ -246,6 +246,19 @@ export async function retirarAuto(id: string, motivo: MotivoRetiro, cobrado: num
   }
 }
 
+/** Consignación: anotar que ya se le transfirió al dueño su parte (o deshacerlo con null). */
+export async function pagoDuenoAccion(id: string, monto: number | null): Promise<Resultado> {
+  try {
+    await verificarSesion("admin");
+    const m = monto === null ? null : pesos(monto);
+    if (m !== null && !(m > 0)) return { ok: false, error: "Escribí cuánto le pagaste." };
+    await registrarPagoDueno(id, m);
+    return { ok: true, mensaje: m === null ? "Listo, se quitó el pago al dueño." : `Listo, quedó anotado que le pagaste $ ${m.toLocaleString("es-AR")} al dueño.` };
+  } catch (e) {
+    return { ok: false, error: errorAmigable(e) };
+  }
+}
+
 export async function borrarAutoAccion(id: string, titulo: string): Promise<Resultado> {
   try {
     await verificarSesion("admin");
@@ -284,6 +297,13 @@ export async function guardarAjustesAccion(a: Record<string, unknown>): Promise<
       .filter((p) => p >= 1 && p <= 120);
     const dias = entero(a.diasAlerta);
     const cons = (a.consignacion ?? {}) as Record<string, unknown>;
+    const ag = (a.agenda ?? {}) as Record<string, unknown>;
+    const horaOk = (h: unknown) => typeof h === "string" && /^([01]\d|2[0-3]):[0-5]\d$/.test(h);
+    const horarios = (Array.isArray(ag.horarios) ? ag.horarios : [])
+      .map((h) => h as Record<string, unknown>)
+      .filter((h) => Number.isInteger(h.dia) && Number(h.dia) >= 0 && Number(h.dia) <= 6 && horaOk(h.desde) && horaOk(h.hasta) && String(h.desde) < String(h.hasta))
+      .map((h) => ({ dia: Number(h.dia), desde: String(h.desde), hasta: String(h.hasta) }))
+      .slice(0, 14);
 
     if (!modo) return { ok: false, error: "Elegí cómo cobrás la comisión." };
     if (!(valor >= 0) || (modo === "porcentaje" && valor > 100)) return { ok: false, error: "Revisá el valor de la comisión." };
@@ -303,7 +323,16 @@ export async function guardarAjustesAccion(a: Record<string, unknown>): Promise<
         exclusividad: cons.exclusividad !== false,
         diasAvisoVencimiento: Math.min(Math.max(entero(cons.diasAvisoVencimiento) || 7, 1), 60),
       },
+      agenda: {
+        activa: ag.activa !== false,
+        horarios,
+        duracion: [15, 20, 30, 45, 60].includes(entero(ag.duracion)) ? entero(ag.duracion) : 30,
+        simultaneas: Math.min(Math.max(entero(ag.simultaneas) || 1, 1), 20),
+        diasAdelante: Math.min(Math.max(entero(ag.diasAdelante) || 14, 1), 60),
+        anticipacionHoras: Math.min(Math.max(entero(ag.anticipacionHoras) || 0, 0), 72),
+      },
     };
+    if (ajustes.agenda.activa && horarios.length === 0) return { ok: false, error: "Marcá al menos un día de atención para la agenda de visitas." };
     await guardarAjustes(ajustes);
     return { ok: true, mensaje: "Listo, se guardaron los ajustes. La página ya usa los valores nuevos." };
   } catch (e) {

@@ -54,6 +54,8 @@ export interface NegocioAuto {
   fechaVenta?: string;
   /** Quién lo vendió (nombre del usuario del panel). */
   vendidoPor?: string;
+  /** Consignación: lo que se le transfirió al dueño después de cobrarle al comprador. */
+  pagoDueno?: { monto: number; fecha: string };
   notas: string;
 
   /** Patente (privada: no se muestra en la página). */
@@ -99,7 +101,34 @@ export interface Ajustes {
     /** Cuántos días antes del vencimiento se avisa en el tablero. */
     diasAvisoVencimiento: number;
   };
+  /** Agenda de visitas y pruebas de manejo. */
+  agenda: ConfigAgenda;
 }
+
+
+
+export interface ConfigAgenda {
+  activa: boolean;
+  /** Días y horarios de atención (dia: 0 = domingo … 6 = sábado). */
+  horarios: { dia: number; desde: string; hasta: string }[];
+  /** Duración de cada visita, en minutos. */
+  duracion: number;
+  /** Cuántas visitas se pueden atender al mismo tiempo. */
+  simultaneas: number;
+  /** Hasta cuántos días adelante se puede reservar. */
+  diasAdelante: number;
+  /** Con cuántas horas de anticipación como mínimo. */
+  anticipacionHoras: number;
+}
+
+export const AGENDA_INICIAL: ConfigAgenda = {
+  activa: true,
+  horarios: [1, 2, 3, 4, 5].map((dia) => ({ dia, desde: "09:00", hasta: "19:00" })).concat([{ dia: 6, desde: "09:00", hasta: "13:00" }]),
+  duracion: 30,
+  simultaneas: 2,
+  diasAdelante: 14,
+  anticipacionHoras: 2,
+};
 
 export const AJUSTES_INICIALES: Ajustes = {
   comisionModo: "porcentaje",
@@ -108,6 +137,7 @@ export const AJUSTES_INICIALES: Ajustes = {
   financiacion: { tna: 55, anticipoMinimo: 30, plazos: [12, 18, 24, 36, 48] },
   diasAlerta: 60,
   consignacion: { plazoDias: 60, cargoRetiro: 0, exclusividad: true, diasAvisoVencimiento: 7 },
+  agenda: AGENDA_INICIAL,
 };
 
 /** Financiación tal como la usa la página pública (tasas en fracción: 0.55 = 55%). */

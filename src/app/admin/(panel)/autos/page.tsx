@@ -37,6 +37,7 @@ export default async function MisAutos({ searchParams }: { searchParams: SP }) {
       ganancia: n ? calcularGanancia(n, precio, negocio.ajustes.comisionMinima) : null,
       alDueno: n ? paraElDueno(n, precio, negocio.ajustes.comisionMinima) : null,
       precioVenta: n?.precioVenta ?? null,
+      pagoDueno: n?.pagoDueno ?? null,
       interesados: clientes.filter((c) => c.favoritos.includes(a.id)).length,
       consignacion: n?.tipo === "consignacion",
       venceEn: n && (a.estado === "publicado" || a.estado === "reservado" || a.estado === "oculto") ? diasParaVencer(n) : null,

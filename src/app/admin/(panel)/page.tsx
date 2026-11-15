@@ -6,7 +6,8 @@ import { leerNegocio } from "@/lib/negocio";
 import { leerClientes } from "@/lib/clientes";
 import { usuarioActual } from "@/lib/usuarios";
 import { contarNuevas } from "@/lib/consultas";
-import { MODO_COMISION_TEXTO, calcularGanancia, completarNegocio, diasParaVencer } from "@/lib/negocio-tipos";
+import { fechaISO, leerTurnos } from "@/lib/turnos";
+import { MODO_COMISION_TEXTO, calcularGanancia, completarNegocio, diasParaVencer, paraElDueno } from "@/lib/negocio-tipos";
 import { formatNumero } from "@/lib/utils";
 import { BotonBorrarEjemplos } from "@/components/admin/BotonBorrarEjemplos";
 
@@ -30,7 +31,8 @@ export default async function Tablero({ searchParams }: { searchParams: SP }) {
     const [yo, sp] = await Promise.all([usuarioActual(), searchParams]);
     return <TableroTienda esAdmin={yo?.rol === "admin"} sinPermiso={!!sp.sinPermiso} />;
   }
-  const [autos, negocio, clientes, yo, sp, consultasNuevas] = await Promise.all([getTodos(), leerNegocio(), leerClientes(), usuarioActual(), searchParams, contarNuevas()]);
+  const [autos, negocio, clientes, yo, sp, consultasNuevas, turnos] = await Promise.all([getTodos(), leerNegocio(), leerClientes(), usuarioActual(), searchParams, contarNuevas(), leerTurnos()]);
+  const visitasHoy = turnos.filter((t) => t.fecha === fechaISO(new Date()) && (t.estado === "pendiente" || t.estado === "confirmado")).sort((x, y) => x.hora.localeCompare(y.hora));
   const esAdmin = yo?.rol === "admin";
   const { ajustes } = negocio;
   const n = (id: string) => negocio.autos[id];
@@ -88,6 +90,12 @@ export default async function Tablero({ searchParams }: { searchParams: SP }) {
   const viejos = stock.filter((a) => !a.ejemplo && dias(a.creado) >= ajustes.diasAlerta);
   const sinFotos = stock.filter((a) => a.fotos.length === 0 && !a.ejemplo);
   const hayEjemplos = autos.some((a) => a.ejemplo);
+  const porPagarDuenos = autos
+    .filter((a) => a.estado === "vendido" && n(a.id)?.tipo === "consignacion" && !n(a.id)?.pagoDueno)
+    .map((a) => {
+      const neg = completarNegocio(n(a.id), ajustes);
+      return { a, monto: paraElDueno(neg, neg.precioVenta ?? a.precio, ajustes.comisionMinima) ?? 0, dueno: neg.duenoNombre };
+    });
   const porVencer = autos
     .filter((a) => (a.estado === "publicado" || a.estado === "reservado" || a.estado === "oculto") && n(a.id)?.tipo === "consignacion")
     .map((a) => ({ a, dias: diasParaVencer(completarNegocio(n(a.id), ajustes)) }))
@@ -131,6 +139,35 @@ export default async function Tablero({ searchParams }: { searchParams: SP }) {
           </p>
           <p className="mt-1 text-lg">Los cargaron sus dueños en “Vendé tu auto”. Tocá acá para verlos →</p>
         </Link>
+      )}
+
+      {esAdmin && porPagarDuenos.length > 0 && (
+        <Link href="/admin/autos?ver=vendido" className="block rounded-lg border-2 border-[#e6c35c] bg-[#fff8e1] p-5 transition-colors hover:bg-[#fff1cc]">
+          <p className="text-xl font-bold">
+            Falta pagarles a {porPagarDuenos.length === 1 ? "1 dueño" : `${porPagarDuenos.length} dueños`}: {pesos(porPagarDuenos.reduce((s, x) => s + x.monto, 0))}
+          </p>
+          <ul className="mt-1 text-lg text-stone-700">
+            {porPagarDuenos.slice(0, 4).map((x) => (
+              <li key={x.a.id}>{x.a.marca} {x.a.modelo}{x.dueno ? ` (${x.dueno})` : ""}: {pesos(x.monto)}</li>
+            ))}
+          </ul>
+          <p className="mt-1 text-lg font-semibold">Cuando les transfieras, anotalo en Mis autos → Vendidos →</p>
+        </Link>
+      )}
+
+      {visitasHoy.length > 0 && (
+        <section className="tarjeta-g p-5">
+          <h2 className="text-xl font-bold">Visitas de hoy</h2>
+          <ul className="mt-2 divide-y-2 divide-linea">
+            {visitasHoy.map((t) => (
+              <li key={t.id} className="flex flex-wrap items-baseline gap-x-4 py-2 text-lg">
+                <span className="font-display text-2xl font-bold">{t.hora}</span>
+                <span><b>{t.autoTitulo}</b> · {t.nombre}{t.vendedor ? ` · lo atiende ${t.vendedor.split(" ")[0]}` : ""}{t.estado === "pendiente" ? " · sin confirmar" : ""}</span>
+              </li>
+            ))}
+          </ul>
+          <Link href="/admin/agenda" className="btn-g mt-3 border-2 border-tinta bg-white hover:bg-papel">Ver la agenda</Link>
+        </section>
       )}
 
       {/* Accesos directos */}

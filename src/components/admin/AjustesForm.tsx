@@ -8,6 +8,9 @@ import { cuotaMensual, formatNumero } from "@/lib/utils";
 import { Casilla, CampoNumero, CampoPesos, Opciones } from "./Campos";
 
 const pesos = (n: number) => `$ ${formatNumero(n)}`;
+const DIAS_SEMANA = [1, 2, 3, 4, 5, 6, 0];
+const NOMBRE_DIA = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+const HORAS = Array.from({ length: 35 }, (_, i) => `${String(6 + Math.floor(i / 2)).padStart(2, "0")}:${i % 2 ? "30" : "00"}`);
 const PLAZOS_POSIBLES = [6, 12, 18, 24, 36, 48, 60];
 const EJEMPLO = 20_000_000;
 
@@ -17,6 +20,17 @@ export function AjustesForm({ inicial }: { inicial: Ajustes }) {
   const [tnaTexto, setTnaTexto] = useState(String(inicial.financiacion.tna));
   const [msg, setMsg] = useState<{ ok: boolean; texto: string } | null>(null);
   const [guardando, start] = useTransition();
+  const setAg = <K extends keyof Ajustes["agenda"]>(k: K, v: Ajustes["agenda"][K]) => setA((p) => ({ ...p, agenda: { ...p.agenda, [k]: v } }));
+  const horarioDe = (dia: number) => a.agenda.horarios.find((h) => h.dia === dia);
+  const setHorario = (dia: number, cambio: { desde?: string; hasta?: string } | null) =>
+    setAg(
+      "horarios",
+      cambio === null
+        ? a.agenda.horarios.filter((h) => h.dia !== dia)
+        : horarioDe(dia)
+          ? a.agenda.horarios.map((h) => (h.dia === dia ? { ...h, ...cambio } : h))
+          : [...a.agenda.horarios, { dia, desde: "09:00", hasta: dia === 6 ? "13:00" : "19:00", ...cambio }],
+    );
   const setCons = (k: keyof Ajustes["consignacion"], v: number | boolean) => setA((p) => ({ ...p, consignacion: { ...p.consignacion, [k]: v } }));
   const setFin = (k: keyof Ajustes["financiacion"], v: number | number[]) => setA((p) => ({ ...p, financiacion: { ...p.financiacion, [k]: v } }));
 
@@ -171,6 +185,60 @@ export function AjustesForm({ inicial }: { inicial: Ajustes }) {
           <p className="rounded-md bg-tinta p-4 text-lg text-white">
             Ejemplo: un auto de {pesos(EJEMPLO)} con {a.financiacion.anticipoMinimo}% de anticipo queda en <b>{plazoMax} cuotas de {pesos(cuotaEjemplo)}</b>.
           </p>
+        )}
+      </section>
+
+      <section id="agenda" className="tarjeta-g scroll-mt-32 space-y-6 p-5 sm:p-7">
+        <div>
+          <h2 className="text-2xl font-bold">Agenda de visitas</h2>
+          <p className="mt-1 text-lg text-stone-600">Los compradores eligen día y horario para ver y probar el auto, según lo que marques acá.</p>
+        </div>
+        <Casilla label="Permitir reservar visitas desde la página" valor={a.agenda.activa} onChange={(v) => setAg("activa", v)} />
+        {a.agenda.activa && (
+          <>
+            <fieldset>
+              <legend className="etiqueta-g">Días y horarios de atención</legend>
+              <div className="space-y-2">
+                {DIAS_SEMANA.map((dia) => {
+                  const h = horarioDe(dia);
+                  return (
+                    <div key={dia} className={`flex flex-wrap items-center gap-3 rounded-md border-2 p-3 ${h ? "border-tinta bg-white" : "border-stone-300 bg-papel"}`}>
+                      <label className="flex min-w-36 cursor-pointer items-center gap-3 text-lg font-semibold">
+                        <input type="checkbox" checked={!!h} onChange={(e) => setHorario(dia, e.target.checked ? {} : null)} className="size-6 accent-rojo" />
+                        {NOMBRE_DIA[dia]}
+                      </label>
+                      {h ? (
+                        <span className="flex items-center gap-2 text-lg">
+                          de
+                          <select value={h.desde} onChange={(e) => setHorario(dia, { desde: e.target.value })} aria-label={`${NOMBRE_DIA[dia]} desde`} className="campo-g h-12! w-28! px-2!">
+                            {HORAS.map((x) => <option key={x}>{x}</option>)}
+                          </select>
+                          a
+                          <select value={h.hasta} onChange={(e) => setHorario(dia, { hasta: e.target.value })} aria-label={`${NOMBRE_DIA[dia]} hasta`} className="campo-g h-12! w-28! px-2!">
+                            {HORAS.map((x) => <option key={x}>{x}</option>)}
+                          </select>
+                        </span>
+                      ) : (
+                        <span className="text-lg text-stone-500">Cerrado</span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </fieldset>
+            <Opciones
+              label="¿Cuánto dura cada visita?"
+              opciones={["15", "20", "30", "45", "60"] as const}
+              textos={{ "15": "15 min", "20": "20 min", "30": "30 min", "45": "45 min", "60": "1 hora" }}
+              valor={String(a.agenda.duracion) as "15" | "20" | "30" | "45" | "60"}
+              onChange={(v) => setAg("duracion", Number(v))}
+            />
+            <div className="grid gap-6 sm:grid-cols-3">
+              <CampoNumero id="simultaneas" label="Visitas a la vez" valor={a.agenda.simultaneas} onChange={(v) => setAg("simultaneas", Math.max(1, v))} ayuda="Según cuántos vendedores pueden atender." />
+              <CampoNumero id="dias-adelante" label="Reservar hasta" valor={a.agenda.diasAdelante} onChange={(v) => setAg("diasAdelante", v)} sufijo="días" />
+              <CampoNumero id="anticipacion" label="Con anticipación de" valor={a.agenda.anticipacionHoras} onChange={(v) => setAg("anticipacionHoras", v)} sufijo="horas" />
+            </div>
+          </>
         )}
       </section>
 

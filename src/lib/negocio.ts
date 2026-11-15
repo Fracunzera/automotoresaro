@@ -21,6 +21,7 @@ export async function leerNegocio(): Promise<DatosNegocio> {
       ...d?.ajustes,
       financiacion: { ...AJUSTES_INICIALES.financiacion, ...d?.ajustes?.financiacion },
       consignacion: { ...AJUSTES_INICIALES.consignacion, ...d?.ajustes?.consignacion },
+      agenda: { ...AJUSTES_INICIALES.agenda, ...d?.ajustes?.agenda },
     },
     autos: d?.autos ?? {},
   };
@@ -63,6 +64,7 @@ export function registrarVenta(id: string, precioVenta: number | null, vendidoPo
       delete actual.precioVenta;
       delete actual.fechaVenta;
       delete actual.vendidoPor;
+      delete actual.pagoDueno;
     } else {
       d.autos[id] = {
         ...completarNegocio(actual, d.ajustes),
@@ -71,6 +73,18 @@ export function registrarVenta(id: string, precioVenta: number | null, vendidoPo
         vendidoPor,
       };
     }
+    await guardar(d);
+  });
+}
+
+/** Registra que se le pagó al dueño (o lo borra, con null). */
+export function registrarPagoDueno(id: string, monto: number | null) {
+  return conCandado("negocio", async () => {
+    const d = await leerNegocio();
+    const actual = d.autos[id];
+    if (!actual) throw new Error("No encontramos los datos de ese auto.");
+    if (monto === null) delete actual.pagoDueno;
+    else actual.pagoDueno = { monto, fecha: new Date().toISOString() };
     await guardar(d);
   });
 }
