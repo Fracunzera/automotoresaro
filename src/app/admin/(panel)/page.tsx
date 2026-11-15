@@ -127,9 +127,9 @@ export default async function Tablero({ searchParams }: { searchParams: SP }) {
       {consultasNuevas > 0 && (
         <Link href="/admin/consultas" className="block rounded-lg bg-rojo p-5 text-white transition-colors hover:bg-rojo-oscuro">
           <p className="text-2xl font-bold">
-            {consultasNuevas === 1 ? "Tenés 1 consulta nueva" : `Tenés ${consultasNuevas} consultas nuevas`} de gente que quiere vender su auto
+            {consultasNuevas === 1 ? "Hay 1 auto nuevo para revisar y publicar" : `Hay ${consultasNuevas} autos nuevos para revisar y publicar`}
           </p>
-          <p className="mt-1 text-lg">Tocá acá para verlas y contactarlas →</p>
+          <p className="mt-1 text-lg">Los cargaron sus dueños en “Vendé tu auto”. Tocá acá para verlos →</p>
         </Link>
       )}
 

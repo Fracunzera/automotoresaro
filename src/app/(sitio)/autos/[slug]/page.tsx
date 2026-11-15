@@ -184,9 +184,6 @@ export default async function AutoPage({ params }: { params: Params }) {
               >
                 <Icon name="calendar" className="size-5" /> Agendar visita y prueba de manejo
               </a>
-              <Link href="/vender?modo=cambio" className="btn-borde w-full">
-                <Icon name="swap" className="size-5" /> Entregar mi usado
-              </Link>
               <BotonFavorito autoId={auto.id} conTexto className="btn-borde w-full" />
             </div>
 

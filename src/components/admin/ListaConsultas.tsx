@@ -10,12 +10,12 @@ import { formatNumero, whatsappLink } from "@/lib/utils";
 import { CampoPesos, Opciones } from "./Campos";
 import { Confirmar } from "./Confirmar";
 
-const ESTADOS: EstadoConsulta[] = ["nueva", "contactado", "cotizado", "comprado", "descartada"];
+const ESTADOS: EstadoConsulta[] = ["nueva", "contactado", "cotizado", "descartada"];
 const TEXTO: Record<EstadoConsulta, string> = {
   nueva: "Nueva",
   contactado: "Contactado",
-  cotizado: "Le pasé precio",
-  comprado: "Lo compramos",
+  cotizado: "Acordando condiciones",
+  comprado: "Publicado",
   descartada: "Descartada",
 };
 const COLOR: Record<EstadoConsulta, string> = {
@@ -52,7 +52,7 @@ function Tarjeta({ c, agencia, esAdmin }: { c: Consulta; agencia: string; esAdmi
   const titulo = `${c.marca} ${c.modelo} ${c.anio || ""}`.trim();
   const cambios = estado !== c.estado || oferta !== c.oferta || notas !== c.notas;
   const wa = normalizarWhatsapp(c.telefono);
-  const saludo = `Hola ${c.nombre.split(" ")[0]}, te escribo de ${agencia} por tu ${titulo} que nos dejaste para ${c.modo === "cambio" ? "entregar como parte de pago" : "vender"}.`;
+  const saludo = `Hola ${c.nombre.split(" ")[0]}, te escribo de ${agencia} por tu ${titulo} que cargaste para vender con nosotros.`;
 
   function guardar() {
     setMsg(null);
@@ -75,7 +75,21 @@ function Tarjeta({ c, agencia, esAdmin }: { c: Consulta; agencia: string; esAdmi
           {c.km ? `${formatNumero(c.km)} km · ` : ""}{c.combustible} · {c.transmision}
         </p>
         <p className="text-lg text-stone-700">Estado: <b>{c.condicion || "-"}</b> · Choques: <b>{c.choques || "-"}</b></p>
-        <p className="mt-1 text-lg font-semibold">{c.modo === "cambio" ? "↔ Lo quiere entregar como parte de pago" : "Quiere venderlo"}</p>
+        <p className="mt-1 text-lg">
+          {c.precioPretendido ? <>Pretende <b className="font-display text-2xl">$ {formatNumero(c.precioPretendido)}</b></> : <b>Pide que lo asesoremos con el precio</b>}
+        </p>
+        {(c.fotos?.length ?? 0) > 0 ? (
+          <div className="mt-3 grid grid-cols-4 gap-1.5">
+            {c.fotos.slice(0, 8).map((f, i) => (
+              <a key={f} href={f} target="_blank" rel="noopener noreferrer" className="block overflow-hidden rounded-md bg-papel">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={f} alt={`Foto ${i + 1}`} className="aspect-square w-full object-cover" />
+              </a>
+            ))}
+          </div>
+        ) : (
+          <p className="mt-2 text-base text-stone-500">No subió fotos.</p>
+        )}
         {c.comentarios && <p className="mt-2 rounded-md bg-papel p-3 text-lg">“{c.comentarios}”</p>}
         <div className="mt-3 border-t-2 border-linea pt-3 text-lg">
           <p><b>{c.nombre}</b>{c.zona && <span className="text-stone-600"> · {c.zona}</span>}</p>
@@ -95,7 +109,7 @@ function Tarjeta({ c, agencia, esAdmin }: { c: Consulta; agencia: string; esAdmi
         ) : (
           <div className="space-y-5">
             <Opciones label="¿En qué quedó?" opciones={ESTADOS} textos={TEXTO} valor={estado} onChange={setEstado} />
-            <CampoPesos id={`oferta-${c.id}`} label="Lo que le ofreciste (opcional)" valor={oferta} onChange={setOferta} />
+            <CampoPesos id={`oferta-${c.id}`} label="Precio acordado para publicar (opcional)" valor={oferta} onChange={setOferta} />
             <div>
               <label htmlFor={`notas-${c.id}`} className="etiqueta-g">Notas</label>
               <textarea id={`notas-${c.id}`} rows={2} value={notas} onChange={(e) => setNotas(e.target.value)} className="campo-g h-auto! py-3" placeholder="Ej: lo trae el sábado para verlo" />
@@ -106,11 +120,13 @@ function Tarjeta({ c, agencia, esAdmin }: { c: Consulta; agencia: string; esAdmi
             </button>
           </div>
         )}
-        {c.estado === "comprado" && (
+        {c.autoId ? (
+          <Link href={`/admin/autos/${c.autoId}`} className="btn-g mt-3 w-full border-2 border-tinta bg-white hover:bg-papel">Ver el auto publicado</Link>
+        ) : c.estado !== "descartada" ? (
           <Link href={`/admin/autos/nuevo?consulta=${c.id}`} className="btn-g mt-3 w-full bg-rojo text-white hover:bg-rojo-oscuro">
-            Cargar este auto para vender
+            Revisar y publicar
           </Link>
-        )}
+        ) : null}
         {esAdmin && (
           <button onClick={() => setBorrar(true)} className="mt-3 w-full py-2 text-base font-semibold text-stone-500 hover:text-rojo-oscuro">
             Borrar consulta

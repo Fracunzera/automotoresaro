@@ -7,6 +7,7 @@ import { usaNube } from "@/lib/almacen";
 import { borrarNegocioAuto, guardarAjustes, guardarNegocioAuto, registrarRetiro, registrarVenta } from "@/lib/negocio";
 import { PAPELES, type Ajustes, type ModoComision, type MotivoRetiro, type NegocioAuto } from "@/lib/negocio-tipos";
 import { emailValido, normalizarEmail, registrarCompra } from "@/lib/clientes";
+import { marcarPublicada } from "@/lib/consultas";
 import { COOKIE_SESION, DURACION_SESION_SEG, crearToken, passwordConfigurada } from "@/lib/sesion";
 import { autenticar, requerirUsuario, type Usuario } from "@/lib/usuarios";
 import { getNegocioAuto } from "@/lib/negocio";
@@ -163,6 +164,7 @@ export async function guardarAuto(
   datos: Record<string, unknown>,
   negocio: Record<string, unknown>,
   publicar: boolean,
+  consultaId?: string,
 ): Promise<Resultado> {
   try {
     const u = await verificarSesion();
@@ -178,6 +180,8 @@ export async function guardarAuto(
     }
     const auto = await crearAuto(v, publicar ? "publicado" : "oculto");
     if (n) await guardarNegocioAuto(auto.id, n);
+    // Si viene de "Vendé tu auto", la solicitud queda como publicada y vinculada al auto
+    if (typeof consultaId === "string" && consultaId) await marcarPublicada(consultaId, auto.id, u.nombre);
     return {
       ok: true,
       id: auto.id,

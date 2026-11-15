@@ -1,48 +1,71 @@
-import { esTienda } from "@/lib/rubro";
-import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+import { esTienda } from "@/lib/rubro";
+import { getCliente } from "@/lib/clientes";
+import { leerNegocio } from "@/lib/negocio";
+import { idClienteActual } from "@/lib/sesion-cliente";
+import { formatNumero } from "@/lib/utils";
 import { SellForm } from "@/components/SellForm";
 
 export const metadata: Metadata = {
   title: "Vendé tu auto",
-  description: "Cotizá tu auto usado gratis. Te lo compramos o lo tomamos como parte de pago.",
+  description: "Publicá tu auto con nosotros: lo mostramos, atendemos a los interesados y nos ocupamos de los papeles y el cobro. Cobramos solo si se vende.",
 };
+export const dynamic = "force-dynamic";
 
 type SP = Promise<Record<string, string | string[] | undefined>>;
+
+const pasos = [
+  ["Vos ponés el precio", "Con nuestro asesoramiento según el mercado."],
+  ["Lo publicamos", "En la página y las redes, con buenas fotos."],
+  ["Atendemos a los interesados", "Consultas, visitas y pruebas de manejo."],
+  ["Papeles y cobro", "Gestionamos la transferencia y el pago del comprador."],
+];
 
 export default async function VenderPage({ searchParams }: { searchParams: SP }) {
   if (esTienda) notFound();
   const sp = await searchParams;
   const s = (k: string) => (typeof sp[k] === "string" ? (sp[k] as string) : undefined);
-  const cambio = s("modo") === "cambio";
+  const [{ ajustes }, idCliente] = await Promise.all([leerNegocio(), idClienteActual()]);
+  const cliente = idCliente ? await getCliente(idCliente) : undefined;
+
+  const comision =
+    ajustes.comisionModo === "porcentaje"
+      ? `el ${ajustes.comisionValor}% del precio de venta${ajustes.comisionMinima > 0 ? ` (mínimo $ ${formatNumero(ajustes.comisionMinima)})` : ""}`
+      : ajustes.comisionModo === "fijo"
+        ? `$ ${formatNumero(ajustes.comisionValor)}`
+        : "una diferencia que acordamos con vos antes de publicarlo";
 
   return (
     <div className="contenedor pt-10">
       <div className="grid gap-10 lg:grid-cols-[1fr_1.15fr] lg:items-start">
         <div>
-          <p className="sobretitulo">{cambio ? "Permuta" : "Vendé tu auto"}</p>
-          <h1 className="titulo mt-2 text-[44px] sm:text-[56px]">
-            {cambio ? "Entregá tu auto y llevate otro" : "Te compramos el auto"}
-          </h1>
+          <p className="sobretitulo">Vendé tu auto</p>
+          <h1 className="titulo mt-2 text-[44px] sm:text-[56px]">Vendemos tu auto por vos</h1>
           <p className="mt-4 max-w-md text-lg text-stone-600">
-            Completá los datos en un minuto y te respondemos por WhatsApp con una cotización. Sin compromiso.
+            Olvidate de publicar en mil lados, atender llamados y recibir desconocidos en tu casa. Nosotros nos ocupamos de todo.
           </p>
 
-          <dl className="mt-10 grid max-w-md grid-cols-2 border-l border-t border-linea">
-            {[
-              ["Respuesta", "Por WhatsApp"],
-              ["Pago", "Al cerrar la operación"],
-              ["Trámites", "Los gestionamos nosotros"],
-              ["Revisión", "En la agencia"],
-            ].map(([k, v]) => (
-              <div key={k} className="border-b border-r border-linea p-4">
-                <dt className="text-[13px] text-stone-500">{k}</dt>
-                <dd className="font-semibold">{v}</dd>
-              </div>
+          <ol className="mt-8 grid max-w-md gap-px overflow-hidden rounded-lg border border-linea bg-linea">
+            {pasos.map(([t, d], i) => (
+              <li key={t} className="flex gap-4 bg-white p-4">
+                <span className="font-display text-2xl font-extrabold leading-none text-rojo">0{i + 1}</span>
+                <div>
+                  <p className="font-semibold">{t}</p>
+                  <p className="text-[15px] text-stone-600">{d}</p>
+                </div>
+              </li>
             ))}
-          </dl>
+          </ol>
 
-          <div className="mt-10 max-w-md">
+          <div className="mt-6 max-w-md rounded-lg bg-papel p-5">
+            <p className="text-lg font-semibold">Cobramos solo si se vende</p>
+            <p className="mt-1 text-[15px] text-stone-700">
+              Nuestra comisión es {comision}. Cuando el comprador paga, te transferimos lo tuyo.
+            </p>
+          </div>
+
+          <div className="mt-8 max-w-md">
             <h2 className="text-lg font-semibold">Qué vas a necesitar</h2>
             <ul className="mt-3 space-y-2 text-[15px] text-stone-700">
               <li className="border-b border-linea pb-2">Título y cédula del auto</li>
@@ -55,7 +78,11 @@ export default async function VenderPage({ searchParams }: { searchParams: SP })
 
         <SellForm
           key={JSON.stringify(sp)}
-          inicial={{ marca: s("marca") ?? "", modelo: s("modelo") ?? "", anio: s("anio") ?? "", modo: cambio ? "cambio" : "venta" }}
+          conCuenta={!!cliente}
+          inicial={{
+            marca: s("marca") ?? "", modelo: s("modelo") ?? "", anio: s("anio") ?? "",
+            ...(cliente ? { nombre: cliente.nombre, telefono: cliente.telefono, email: cliente.email, zona: cliente.ciudad } : {}),
+          }}
         />
       </div>
     </div>

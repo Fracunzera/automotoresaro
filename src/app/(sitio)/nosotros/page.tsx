@@ -21,7 +21,9 @@ const preguntasTienda = (ag: Awaited<ReturnType<typeof getAgencia>>) => [
 
 const preguntas = (ag: Awaited<ReturnType<typeof getAgencia>>) => esTienda ? preguntasTienda(ag) : [
   ["¿Los autos están revisados?", "Sí. Antes de publicar un auto revisamos mecánica, frenos, electricidad y carrocería, y verificamos que la documentación esté en regla."],
-  ["¿Puedo entregar mi auto como parte de pago?", "Sí. Te lo cotizamos y el valor se descuenta del auto que elijas. Empezá desde Vender mi auto."],
+  ["¿Cómo vendo mi auto con ustedes?", "Lo cargás en “Vendé tu auto” con datos, fotos y el precio que pretendés. Lo revisamos, acordamos el precio y lo publicamos. Nosotros atendemos a los interesados, mostramos el auto y gestionamos los papeles y el cobro."],
+  ["¿Cuánto cobran por vender mi auto?", "Cobramos una comisión solo si se vende. Te la informamos antes de publicar y queda por escrito en el acuerdo."],
+  ["¿Cuándo cobro?", "Cuando el comprador paga y se firma la transferencia, te transferimos el precio de venta descontada la comisión."],
   ["¿Cómo funciona la financiación?", "Pagás un anticipo y el resto en cuotas fijas. La aprobación y la tasa final dependen de la entidad financiera."],
   ["¿Quién hace la transferencia?", "La gestionamos nosotros en el Registro Automotor. Te avisamos qué papeles traer."],
   ["¿Puedo ver el auto y probarlo?", "Sí. Escribinos por WhatsApp y coordinamos día y horario para que lo veas y lo manejes."],

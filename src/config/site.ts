@@ -5,9 +5,9 @@
  */
 export const site = {
   nombre: "Automotores Aro",
-  eslogan: "Autos usados revisados, financiación y tomamos tu usado.",
+  eslogan: "Autos usados revisados, con financiación y toda la gestión a cargo nuestro.",
   descripcion:
-    "Comprá o vendé tu auto usado con confianza. Unidades revisadas, financiación a tu medida y tasación de tu usado en el día.",
+    "Comprá tu próximo auto o vendé el tuyo con nosotros: lo publicamos, atendemos a los interesados y nos ocupamos de los papeles y el cobro.",
 
   // WhatsApp en formato internacional, sin "+", espacios ni guiones.
   // Ejemplo Argentina: 54 + 9 + código de área sin 0 + número sin 15.
@@ -51,8 +51,8 @@ export const site = {
       icono: "card",
     },
     {
-      titulo: "Tomamos tu usado",
-      texto: "Te lo cotizamos en el día y lo usamos como parte de pago.",
+      titulo: "Vendemos tu auto por vos",
+      texto: "Lo publicamos y nos ocupamos de interesados, papeles y cobro. Cobramos solo si se vende.",
       icono: "swap",
     },
     {

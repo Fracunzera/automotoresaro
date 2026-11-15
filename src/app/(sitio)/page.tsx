@@ -46,9 +46,9 @@ export default async function Home() {
       {/* BANNERS */}
       <section className="contenedor mt-8 grid gap-4 md:grid-cols-3">
         <Link href="/vender" className="group flex min-h-40 flex-col justify-between rounded-lg bg-rojo p-6 text-white">
-          <p className="titulo text-[30px] text-white">Vendé tu auto en el día</p>
+          <p className="titulo text-[30px] text-white">Vendé tu auto con nosotros</p>
           <span className="inline-flex items-center gap-2 text-[15px] font-semibold">
-            Pedí tu cotización <Icon name="arrow" className="size-4 transition-transform group-hover:translate-x-1" />
+            Publicalo acá <Icon name="arrow" className="size-4 transition-transform group-hover:translate-x-1" />
           </span>
         </Link>
         <Link href="/financiacion" className="group flex min-h-40 flex-col justify-between rounded-lg bg-tinta p-6 text-white">
@@ -57,10 +57,10 @@ export default async function Home() {
             Simulá tu cuota <Icon name="arrow" className="size-4 transition-transform group-hover:translate-x-1" />
           </span>
         </Link>
-        <Link href="/vender?modo=cambio" className="group flex min-h-40 flex-col justify-between rounded-lg bg-papel p-6">
-          <p className="titulo text-[30px]">Entregá tu usado como parte de pago</p>
+        <Link href="/nosotros#preguntas" className="group flex min-h-40 flex-col justify-between rounded-lg bg-papel p-6">
+          <p className="titulo text-[30px]">Papeles y pagos, a cargo nuestro</p>
           <span className="inline-flex items-center gap-2 text-[15px] font-semibold text-tinta">
-            Cotizá tu usado <Icon name="arrow" className="size-4 transition-transform group-hover:translate-x-1" />
+            Cómo trabajamos <Icon name="arrow" className="size-4 transition-transform group-hover:translate-x-1" />
           </span>
         </Link>
       </section>
@@ -117,18 +117,18 @@ export default async function Home() {
       <section className="contenedor mt-20">
         <div className="grid overflow-hidden rounded-lg bg-tinta text-white lg:grid-cols-2">
           <div className="p-8 sm:p-12">
-            <p className="sobretitulo">Vender o permutar</p>
-            <h2 className="titulo mt-3 text-[40px] text-white sm:text-[48px]">Te compramos el auto. Así de simple.</h2>
+            <p className="sobretitulo">Vendé tu auto</p>
+            <h2 className="titulo mt-3 text-[40px] text-white sm:text-[48px]">Lo vendemos por vos. Cobramos solo si se vende.</h2>
             <p className="mt-4 max-w-md text-stone-300">
-              Sin publicar, sin atender llamados y sin recibir desconocidos en tu casa.
+              Sin publicar en mil lados, sin atender llamados y sin recibir desconocidos en tu casa.
             </p>
-            <Link href="/vender" className="btn-rojo mt-8">Cotizar mi auto</Link>
+            <Link href="/vender" className="btn-rojo mt-8">Publicar mi auto</Link>
           </div>
           <ol className="grid border-t border-white/10 lg:border-l lg:border-t-0">
             {[
-              ["Contanos de tu auto", "Marca, modelo, año y kilómetros. Si tenés fotos, mejor."],
-              ["Recibí una oferta", "Te respondemos por WhatsApp con un valor estimado."],
-              ["Revisión y pago", "Lo vemos en la agencia, confirmamos el precio y cobrás o lo usás como parte de pago."],
+              ["Cargalo en la página", "Datos, fotos y el precio que pretendés. Si no sabés cuánto pedir, te asesoramos."],
+              ["Lo revisamos y publicamos", "Acordamos el precio y lo publicamos en la página y las redes."],
+              ["Lo vendemos y cobrás", "Atendemos a los interesados, gestionamos papeles y cobro, y te transferimos lo tuyo."],
             ].map(([t, d], i) => (
               <li key={t} className="flex gap-5 border-b border-white/10 px-8 py-6 last:border-0 sm:px-12">
                 <span className="font-display text-4xl font-extrabold leading-none text-rojo">0{i + 1}</span>

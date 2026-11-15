@@ -24,7 +24,8 @@ async function achicar(archivo: File): Promise<Blob> {
   throw new Error("formato");
 }
 
-export function SubirFotos({ fotos, onChange }: { fotos: string[]; onChange: (f: string[]) => void }) {
+/** endpoint: dónde se suben (el panel o el formulario público "Vendé tu auto"). */
+export function SubirFotos({ fotos, onChange, endpoint = "/api/admin/fotos", maximo = 30 }: { fotos: string[]; onChange: (f: string[]) => void; endpoint?: string; maximo?: number }) {
   const input = useRef<HTMLInputElement>(null);
   const [progreso, setProgreso] = useState<{ hecho: number; total: number } | null>(null);
   const [error, setError] = useState("");
@@ -32,7 +33,7 @@ export function SubirFotos({ fotos, onChange }: { fotos: string[]; onChange: (f:
   async function subir(archivos: FileList | null) {
     if (!archivos?.length) return;
     setError("");
-    const lista = Array.from(archivos).slice(0, 30 - fotos.length);
+    const lista = Array.from(archivos).slice(0, Math.max(0, maximo - fotos.length));
     const nuevas: string[] = [];
     let fallidas = 0;
     setProgreso({ hecho: 0, total: lista.length });
@@ -41,7 +42,7 @@ export function SubirFotos({ fotos, onChange }: { fotos: string[]; onChange: (f:
         const blob = await achicar(archivo);
         const form = new FormData();
         form.append("foto", blob, "foto.jpg");
-        const res = await fetch("/api/admin/fotos", { method: "POST", body: form });
+        const res = await fetch(endpoint, { method: "POST", body: form });
         const datos = (await res.json().catch(() => ({}))) as { url?: string; error?: string };
         if (!res.ok || !datos.url) throw new Error(datos.error || "error");
         nuevas.push(datos.url);
@@ -49,7 +50,7 @@ export function SubirFotos({ fotos, onChange }: { fotos: string[]; onChange: (f:
       } catch (e) {
         fallidas++;
         const msg = e instanceof Error ? e.message : "";
-        if (msg.startsWith("Tu sesión")) { setError(msg); break; }
+        if (msg.startsWith("Tu sesión") || msg.startsWith("Subiste muchas")) { setError(msg); break; }
       }
       setProgreso({ hecho: i + 1, total: lista.length });
     }

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { formatNumero } from "@/lib/utils";
 import { Icon } from "./Icon";
 
-type Tab = "comprar" | "vender" | "cambiar";
+type Tab = "comprar" | "vender";
 
 const anioActual = new Date().getFullYear();
 
@@ -13,13 +13,12 @@ export function HeroBuscador({ marcas }: { marcas: string[] }) {
 
   const tabs: { id: Tab; label: string }[] = [
     { id: "comprar", label: "Comprar" },
-    { id: "vender", label: "Vender" },
-    { id: "cambiar", label: "Cambiar" },
+    { id: "vender", label: "Vender mi auto" },
   ];
 
   return (
     <div className="w-full max-w-[720px] overflow-hidden rounded-lg bg-white text-tinta shadow-[0_12px_40px_rgba(0,0,0,0.35)]">
-      <div className="grid grid-cols-3 border-b border-linea" role="tablist">
+      <div className="grid grid-cols-2 border-b border-linea" role="tablist">
         {tabs.map((t) => (
           <button
             key={t.id}
@@ -52,14 +51,13 @@ export function HeroBuscador({ marcas }: { marcas: string[] }) {
         </form>
       ) : (
         <form action="/vender" className="grid gap-3 p-4 sm:grid-cols-[1fr_1fr_0.8fr_auto] sm:p-5">
-          {tab === "cambiar" && <input type="hidden" name="modo" value="cambio" />}
           <input name="marca" className="campo" placeholder="Marca de tu auto" aria-label="Marca de tu auto" required />
           <input name="modelo" className="campo" placeholder="Modelo" aria-label="Modelo" required />
           <select name="anio" className="campo" defaultValue="" aria-label="Año" required>
             <option value="" disabled>Año</option>
             {Array.from({ length: 25 }, (_, i) => anioActual - i).map((a) => <option key={a}>{a}</option>)}
           </select>
-          <button className="btn-rojo">{tab === "vender" ? "Cotizar" : "Continuar"}</button>
+          <button className="btn-rojo">Publicar</button>
         </form>
       )}
     </div>

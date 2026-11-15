@@ -27,15 +27,25 @@ export default async function NuevoAuto({ searchParams }: { searchParams: SP }) 
     km: consulta.km,
     ...((COMBUSTIBLES as readonly string[]).includes(consulta.combustible) ? { combustible: consulta.combustible as DatosAuto["combustible"] } : {}),
     ...((TRANSMISIONES as readonly string[]).includes(consulta.transmision) ? { transmision: consulta.transmision as DatosAuto["transmision"] } : {}),
+    fotos: consulta.fotos ?? [],
+    precio: consulta.oferta || consulta.precioPretendido || 0,
+    descripcion: consulta.comentarios,
   };
   return (
     <div>
       <h1 className="text-3xl font-bold">Cargar un auto nuevo</h1>
       <p className="mt-1 mb-6 text-lg text-stone-600">
-        {consulta ? `Ya completamos los datos que dejó ${consulta.nombre}. Revisalos, sumá fotos y precio.` : "Completá de arriba hacia abajo. Al final tocá “Guardar y publicar”."}
+        {consulta ? `Ya completamos lo que cargó ${consulta.nombre}: datos, fotos y precio. Revisalos, completá el acuerdo con el dueño y publicalo.` : "Completá de arriba hacia abajo. Al final tocá “Guardar y publicar”."}
       </p>
       <AutoForm
-        negocioInicial={consulta ? { ...negocioVacio(ajustes), notas: `Lo compramos por la consulta de ${consulta.nombre} (${consulta.telefono})${consulta.oferta ? `, ofrecimos $ ${consulta.oferta.toLocaleString("es-AR")}` : ""}.`, costo: consulta.oferta } : negocioVacio(ajustes)}
+        negocioInicial={consulta ? {
+          ...negocioVacio(ajustes),
+          tipo: "consignacion",
+          duenoNombre: consulta.nombre,
+          duenoTelefono: consulta.telefono,
+          notas: `Lo cargó el dueño en “Vendé tu auto”.${consulta.precioPretendido ? ` Pretendía $ ${consulta.precioPretendido.toLocaleString("es-AR")}.` : ""}${consulta.zona ? ` Es de ${consulta.zona}.` : ""}`,
+        } : negocioVacio(ajustes)}
+        consultaId={consulta?.id}
         ajustes={ajustes}
         esAdmin={yo?.rol === "admin"}
         datosIniciales={desdeConsulta}

@@ -89,7 +89,7 @@ export const MARCA_INICIAL: Marca = esTienda
       portadaFoto: site.fotoPortada,
       beneficios: site.beneficios.map((b) => ({ ...b })),
       nosotrosTitulo: "Atención de agencia de barrio, stock a un click",
-      nosotrosTexto: "Nos dedicamos a la compraventa de autos usados. Conocemos cada auto que vendemos y te acompañamos desde que lo elegís hasta que tenés la cédula a tu nombre.\n\nEn la web podés ver el stock actualizado, simular la cuota y cotizar tu usado. Cuando quieras, venís, lo ves y lo manejás.",
+      nosotrosTexto: "Vendemos autos usados en consignación: los dueños nos confían su auto y nosotros nos ocupamos de todo, desde la publicación hasta que el comprador tiene la cédula a su nombre.\n\nSi buscás auto, en la web ves el stock actualizado y simulás la cuota. Si querés vender el tuyo, lo cargás en la página y nosotros hacemos el resto.",
     };
 
 export const AGENCIA_INICIAL: Agencia = {

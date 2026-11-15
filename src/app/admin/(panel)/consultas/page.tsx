@@ -9,9 +9,9 @@ import { ListaConsultas } from "@/components/admin/ListaConsultas";
 type SP = Promise<Record<string, string | string[] | undefined>>;
 
 const GRUPOS: { id: string; label: string; estados: EstadoConsulta[] }[] = [
-  { id: "nuevas", label: "Nuevas", estados: ["nueva"] },
+  { id: "nuevas", label: "Para revisar", estados: ["nueva"] },
   { id: "curso", label: "En curso", estados: ["contactado", "cotizado"] },
-  { id: "cerradas", label: "Cerradas", estados: ["comprado", "descartada"] },
+  { id: "cerradas", label: "Publicados o descartados", estados: ["comprado", "descartada"] },
 ];
 
 export default async function ConsultasPage({ searchParams }: { searchParams: SP }) {
@@ -23,9 +23,9 @@ export default async function ConsultasPage({ searchParams }: { searchParams: SP
 
   return (
     <div>
-      <h1 className="text-3xl font-bold">Consultas para vender</h1>
+      <h1 className="text-3xl font-bold">Autos para publicar</h1>
       <p className="mt-1 text-lg text-stone-600">
-        Personas que completaron “Vendé tu auto” en la página. Llamalas o escribiles y anotá en qué quedó.
+        Dueños que cargaron su auto en “Vendé tu auto”. Revisalo, hablá con el dueño para acordar precio y comisión, y publicalo.
       </p>
       <nav className="mt-6 grid grid-cols-3 gap-2">
         {GRUPOS.map((g) => {
@@ -46,7 +46,7 @@ export default async function ConsultasPage({ searchParams }: { searchParams: SP
       <ListaConsultas consultas={lista} agencia={ag.nombre} esAdmin={yo?.rol === "admin"} />
       {lista.length === 0 && (
         <p className="tarjeta-g mt-4 p-8 text-center text-xl">
-          {grupo.id === "nuevas" ? "No hay consultas nuevas. Cuando alguien complete “Vendé tu auto”, aparece acá." : "No hay consultas acá."}
+          {grupo.id === "nuevas" ? "No hay autos para revisar. Cuando un dueño cargue su auto en “Vendé tu auto”, aparece acá." : "No hay consultas acá."}
         </p>
       )}
     </div>

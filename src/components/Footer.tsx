@@ -48,7 +48,6 @@ export async function Footer() {
           <h3 className="font-display text-sm font-semibold tracking-[0.12em] text-white uppercase">Servicios</h3>
           <ul className="mt-4 space-y-2.5 text-[15px]">
             <li><Link href="/vender" className="hover:text-white">Vender mi auto</Link></li>
-            <li><Link href="/vender?modo=cambio" className="hover:text-white">Entregar mi usado</Link></li>
             <li><Link href="/financiacion" className="hover:text-white">Financiación</Link></li>
             <li><Link href="/nosotros#preguntas" className="hover:text-white">Preguntas frecuentes</Link></li>
             <li><Link href="/cuenta" className="hover:text-white">Mis favoritos</Link></li>

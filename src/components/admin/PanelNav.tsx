@@ -25,7 +25,7 @@ const links: Item[] = esTienda
   { href: "/admin", label: "Inicio", exacto: true },
   { href: "/admin/autos", label: "Mis autos" },
   { href: "/admin/autos/nuevo", label: "Cargar auto", exacto: true },
-  { href: "/admin/consultas", label: "Consultas" },
+  { href: "/admin/consultas", label: "Para publicar" },
   { href: "/admin/clientes", label: "Clientes" },
   { href: "/admin/mails", label: "Mails", soloAdmin: true },
   { href: "/admin/configuracion", label: "Ajustes", soloAdmin: true, tambien: AJUSTES },

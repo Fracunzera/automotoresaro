@@ -276,14 +276,14 @@ function FragmentoConPromo({ children, mostrarPromo }: { children: ReactNode; mo
   return (
     <>
       {mostrarPromo && (
-        <Link href="/vender?modo=cambio" className="flex flex-col justify-between rounded-lg bg-tinta p-6 text-white transition-colors hover:bg-tinta-2">
+        <Link href="/vender" className="flex flex-col justify-between rounded-lg bg-tinta p-6 text-white transition-colors hover:bg-tinta-2">
           <div>
-            <p className="sobretitulo">Tomamos tu usado</p>
-            <p className="titulo mt-3 text-[32px] text-white">¿Tenés un auto para entregar?</p>
-            <p className="mt-3 text-[15px] text-stone-300">Te lo cotizamos y lo usás como parte de pago de cualquiera de estos autos.</p>
+            <p className="sobretitulo">Vendé tu auto</p>
+            <p className="titulo mt-3 text-[32px] text-white">¿Querés vender el tuyo?</p>
+            <p className="mt-3 text-[15px] text-stone-300">Lo publicamos acá y nos ocupamos de todo: interesados, papeles y cobro. Cobramos solo si se vende.</p>
           </div>
           <span className="mt-6 inline-flex items-center gap-2 font-semibold">
-            Cotizar mi auto <Icon name="arrow" className="size-4" />
+            Publicar mi auto <Icon name="arrow" className="size-4" />
           </span>
         </Link>
       )}

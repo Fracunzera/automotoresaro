@@ -121,7 +121,7 @@ export const hoyISO = () => {
 export function negocioVacio(ajustes: Ajustes): NegocioAuto {
   const c = { ...AJUSTES_INICIALES.consignacion, ...ajustes.consignacion };
   return {
-    tipo: "propio",
+    tipo: "consignacion",
     costo: 0,
     gastos: 0,
     duenoNombre: "",

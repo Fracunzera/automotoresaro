@@ -12,6 +12,8 @@ import { leerPedidos } from "@/lib/pedidos";
 import { esTienda } from "@/lib/rubro";
 import { ESTADO_PEDIDO_TEXTO } from "@/lib/productos-tipos";
 import { formatNumero } from "@/lib/utils";
+import { consultasDe } from "@/lib/consultas";
+import { getTodos } from "@/lib/autos";
 import { PerfilForm } from "@/components/cuenta/PerfilForm";
 import { salirCliente } from "./acciones";
 
@@ -33,6 +35,15 @@ export default async function CuentaPage() {
   const favProductos = cliente.favoritos.map((f) => productos.find((p) => p.id === f)).filter((p) => !!p);
   const noDisponibles = cliente.favoritos.length - (esTienda ? favProductos.length : favoritos.length);
   const misPedidos = pedidos.filter((p) => p.cliente.email && p.cliente.email === cliente.email);
+  // Autos que este cliente cargó para vender (consignación)
+  const [misSolicitudes, todosAutos] = esTienda ? [[], []] : await Promise.all([consultasDe(cliente.id, cliente.email), getTodos()]);
+  const estadoParaDueno = (c: (typeof misSolicitudes)[number]) => {
+    const a = c.autoId ? todosAutos.find((x) => x.id === c.autoId) : undefined;
+    if (a?.estado === "vendido") return { texto: "¡Vendido!", clase: "bg-[#e7f4ec] text-[#17733c]", link: null };
+    if (a && (a.estado === "publicado" || a.estado === "reservado")) return { texto: a.estado === "reservado" ? "Reservado" : "Publicado", clase: "bg-[#e7f4ec] text-[#17733c]", link: `/autos/${a.slug}` };
+    if (c.estado === "descartada" || (a && a.estado === "retirado")) return { texto: "No publicado", clase: "bg-stone-200 text-stone-700", link: null };
+    return { texto: "En revisión", clase: "bg-[#fff1cc] text-[#7a5300]", link: null };
+  };
 
   return (
     <div className="contenedor pt-10">
@@ -90,6 +101,38 @@ export default async function CuentaPage() {
                   </Link>
                 </li>
               ))}
+            </ul>
+          )}
+        </section>
+      )}
+
+      {!esTienda && (
+        <section className="mt-14">
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <h2 className="titulo text-[30px]">Mis autos a la venta</h2>
+            <Link href="/vender" className="btn-borde">Vender otro auto</Link>
+          </div>
+          {misSolicitudes.length === 0 ? (
+            <p className="mt-3 text-stone-600">
+              ¿Querés vender tu auto? <Link href="/vender" className="font-semibold text-tinta underline">Cargalo acá</Link> y nosotros nos ocupamos de todo.
+            </p>
+          ) : (
+            <ul className="mt-4 divide-y divide-linea border-y border-linea">
+              {misSolicitudes.map((c) => {
+                const e = estadoParaDueno(c);
+                return (
+                  <li key={c.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
+                    <span>
+                      <b>{c.marca} {c.modelo} {c.anio || ""}</b>
+                      <span className="text-stone-500"> · cargado el {new Date(c.fecha).toLocaleDateString("es-AR")}</span>
+                    </span>
+                    <span className="flex items-center gap-3">
+                      <span className={`rounded-sm px-2 py-0.5 text-sm font-bold ${e.clase}`}>{e.texto}</span>
+                      {e.link && <Link href={e.link} className="text-sm font-semibold text-rojo hover:underline">Ver publicación</Link>}
+                    </span>
+                  </li>
+                );
+              })}
             </ul>
           )}
         </section>

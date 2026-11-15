@@ -40,8 +40,8 @@ function Seccion({ n, titulo, ayuda, children }: { n: number; titulo: string; ay
 }
 
 export function AutoForm({
-  auto, negocioInicial, ajustes, esAdmin, datosIniciales,
-}: { auto?: Auto; negocioInicial: NegocioAuto; ajustes: Ajustes; esAdmin: boolean; datosIniciales?: Partial<DatosAuto> }) {
+  auto, negocioInicial, ajustes, esAdmin, datosIniciales, consultaId,
+}: { auto?: Auto; negocioInicial: NegocioAuto; ajustes: Ajustes; esAdmin: boolean; datosIniciales?: Partial<DatosAuto>; consultaId?: string }) {
   const router = useRouter();
   const [d, setD] = useState<DatosAuto>(() => (auto ? { ...VACIO, ...auto } : { ...VACIO, ...datosIniciales }));
   const [neg, setNeg] = useState<NegocioAuto>(negocioInicial);
@@ -75,7 +75,7 @@ export function AutoForm({
     setError("");
     if (d.fotos.length === 0 && !confirmadoSinFotos) return setSinFotos(publicar);
     start(async () => {
-      const r = await guardarAuto(auto?.id ?? null, { ...d }, { ...neg }, publicar);
+      const r = await guardarAuto(auto?.id ?? null, { ...d }, { ...neg }, publicar, consultaId);
       if (!r.ok) {
         setError(r.error);
         window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
@@ -175,8 +175,8 @@ export function AutoForm({
       {esAdmin && <Seccion n={4} titulo="Datos del negocio" ayuda="🔒 Esto es privado: solo lo ves vos en el panel, nunca aparece en la página.">
         <Opciones
           label="¿De quién es el auto?"
-          opciones={["propio", "consignacion"] as const}
-          textos={{ propio: "Es mío (lo compré)", consignacion: "Es de un cliente" }}
+          opciones={["consignacion", "propio"] as const}
+          textos={{ consignacion: "Es de un cliente (consignación)", propio: "Es de la agencia" }}
           valor={neg.tipo}
           onChange={(v) => setN("tipo", v)}
         />

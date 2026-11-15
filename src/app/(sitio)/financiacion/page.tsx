@@ -7,7 +7,7 @@ import { FinancingCalculator } from "@/components/FinancingCalculator";
 
 export const metadata: Metadata = {
   title: "Financiación",
-  description: "Simulá la cuota de tu próximo auto usado. Anticipo más cuotas fijas, y tu usado como parte de pago.",
+  description: "Simulá la cuota de tu próximo auto usado. Anticipo más cuotas fijas.",
 };
 
 const requisitos = [
@@ -26,7 +26,7 @@ export default async function FinanciacionPage() {
       <p className="sobretitulo">Financiación</p>
       <h1 className="titulo mt-2 max-w-2xl text-[44px] sm:text-[56px]">Tu auto con anticipo y cuotas fijas</h1>
       <p className="mt-4 max-w-xl text-lg text-stone-600">
-        Desde {Math.round(anticipoMinimo * 100)}% de anticipo, que puede ser tu usado, y el resto en {plazos[0]} a {Math.max(...plazos)} cuotas.
+        Desde {Math.round(anticipoMinimo * 100)}% de anticipo y el resto en {plazos[0]} a {Math.max(...plazos)} cuotas.
       </p>
 
       <div className="mt-10 grid gap-10 lg:grid-cols-[1.5fr_1fr] lg:items-start">

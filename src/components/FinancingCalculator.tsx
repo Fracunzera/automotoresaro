@@ -69,7 +69,6 @@ export function FinancingCalculator({ fin, precio: precioFijo, tituloAuto, varia
         />
         <div className="flex justify-between text-[13px] text-stone-500">
           <span>Mín. {Math.round(anticipoMinimo * 100)}%</span>
-          <span>Puede ser tu usado</span>
         </div>
       </div>
 

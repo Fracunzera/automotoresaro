@@ -1,9 +1,9 @@
 /**
- * Consultas de "Vendé tu auto": personas que quieren vender su auto o entregarlo como parte de pago.
- * Datos privados (teléfonos, emails). Solo servidor.
+ * Autos que los dueños cargan en "Vendé tu auto" para que la agencia los venda en consignación.
+ * Quedan pendientes hasta que la agencia los revisa y los publica. Datos privados. Solo servidor.
  */
 import { randomUUID } from "node:crypto";
-import { guardarPrivado, leerPrivado } from "./almacen";
+import { borrarFotos, guardarPrivado, leerPrivado } from "./almacen";
 import { conCandado } from "./candado";
 
 export const ESTADOS_CONSULTA = ["nueva", "contactado", "cotizado", "comprado", "descartada"] as const;
@@ -12,15 +12,15 @@ export type EstadoConsulta = (typeof ESTADOS_CONSULTA)[number];
 export const ESTADO_CONSULTA_TEXTO: Record<EstadoConsulta, string> = {
   nueva: "Nueva",
   contactado: "Contactado",
-  cotizado: "Le pasé precio",
-  comprado: "Lo compramos",
+  cotizado: "Acordando condiciones",
+  comprado: "Publicado",
   descartada: "Descartada",
 };
 
 export interface Consulta {
   id: string;
   fecha: string;
-  /** venta: quiere venderlo. cambio: lo entrega como parte de pago. */
+  /** Siempre "venta" (se conserva por compatibilidad con datos anteriores). */
   modo: "venta" | "cambio";
   marca: string;
   modelo: string;
@@ -37,6 +37,14 @@ export interface Consulta {
   telefono: string;
   email: string;
   zona: string;
+  /** Fotos que subió el dueño. */
+  fotos: string[];
+  /** Precio que pretende el dueño (0 = no sabe, pide asesoramiento). */
+  precioPretendido: number;
+  /** Cuenta del dueño en la página, si estaba conectado. */
+  clienteId?: string;
+  /** Auto publicado a partir de esta solicitud. */
+  autoId?: string;
   /* Seguimiento de la agencia */
   estado: EstadoConsulta;
   oferta: number;
@@ -65,7 +73,7 @@ function modificar<T>(fn: (lista: Consulta[]) => T): Promise<T> {
   });
 }
 
-export type DatosConsulta = Omit<Consulta, "id" | "fecha" | "estado" | "oferta" | "notas" | "atendidoPor" | "actualizado">;
+export type DatosConsulta = Omit<Consulta, "id" | "fecha" | "estado" | "oferta" | "notas" | "atendidoPor" | "actualizado" | "autoId">;
 
 export function crearConsulta(d: DatosConsulta): Promise<Consulta> {
   return modificar((lista) => {
@@ -89,11 +97,31 @@ export function actualizarSeguimiento(
   });
 }
 
-export function borrarConsulta(id: string): Promise<void> {
+/** Marca la solicitud como publicada y la vincula al auto creado. */
+export function marcarPublicada(id: string, autoId: string, quien: string) {
   return modificar((lista) => {
-    const i = lista.findIndex((x) => x.id === id);
-    if (i >= 0) lista.splice(i, 1);
+    const c = lista.find((x) => x.id === id);
+    if (!c) return;
+    Object.assign(c, { estado: "comprado", autoId, atendidoPor: quien, actualizado: new Date().toISOString() });
   });
+}
+
+export async function borrarConsulta(id: string): Promise<void> {
+  let fotos: string[] = [];
+  await modificar((lista) => {
+    const i = lista.findIndex((x) => x.id === id);
+    if (i >= 0) {
+      // Las fotos se borran solo si no se usaron para publicar el auto
+      if (!lista[i].autoId) fotos = lista[i].fotos ?? [];
+      lista.splice(i, 1);
+    }
+  });
+  await borrarFotos(fotos);
+}
+
+/** Solicitudes de un dueño (por su cuenta o por su email). */
+export async function consultasDe(clienteId: string, email: string) {
+  return (await leerConsultas()).filter((c) => c.clienteId === clienteId || (email && c.email === email));
 }
 
 export async function contarNuevas(): Promise<number> {
