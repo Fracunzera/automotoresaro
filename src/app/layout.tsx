@@ -9,6 +9,8 @@ import "./globals.css";
 export async function generateMetadata(): Promise<Metadata> {
   const ag = await getAgencia();
   return {
+    // Base para las direcciones completas de las vistas previas (WhatsApp, Facebook)
+    metadataBase: new URL(process.env.SITE_URL || "http://localhost:3000"),
     title: { default: `${ag.nombre} | ${esTienda ? "Tienda online" : "Autos usados"} en ${ag.ciudad}`, template: `%s | ${ag.nombre}` },
     description: ag.marca.descripcion,
     openGraph: { title: ag.nombre, description: ag.marca.descripcion, locale: "es_AR", type: "website" },

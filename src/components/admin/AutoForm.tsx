@@ -82,7 +82,8 @@ export function AutoForm({
         return;
       }
       setCambios(false);
-      router.push(`/admin/autos?ok=${encodeURIComponent(r.mensaje)}`);
+      // Si se acaba de publicar un auto nuevo, se muestra el recuadro para compartirlo
+      router.push(`/admin/autos?ok=${encodeURIComponent(r.mensaje)}${!auto && publicar && r.id ? `&compartir=${r.id}` : ""}`);
       router.refresh();
     });
   }

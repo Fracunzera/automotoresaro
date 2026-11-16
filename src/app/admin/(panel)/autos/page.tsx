@@ -8,6 +8,7 @@ import { usuarioActual } from "@/lib/usuarios";
 import { MOTIVO_RETIRO_TEXTO, calcularGanancia, completarNegocio, diasParaVencer, paraElDueno } from "@/lib/negocio-tipos";
 import { ESTADOS, ESTADO_TEXTO, type Estado } from "@/lib/tipos";
 import { ListaAutos, type FilaAuto } from "@/components/admin/ListaAutos";
+import { PanelCompartir } from "@/components/Compartir";
 
 type SP = Promise<Record<string, string | string[] | undefined>>;
 
@@ -69,6 +70,16 @@ export default async function MisAutos({ searchParams }: { searchParams: SP }) {
           ✓ {ok}
         </p>
       )}
+      {(() => {
+        const nuevo = typeof sp.compartir === "string" ? autos.find((x) => x.id === sp.compartir && x.estado === "publicado") : undefined;
+        return nuevo ? (
+          <section className="tarjeta-g mt-4 p-5">
+            <h2 className="text-2xl font-bold">Compartilo ahora</h2>
+            <p className="mb-4 mt-1 text-lg text-stone-600">Mandalo por WhatsApp, publicalo en las redes o copiá el link.</p>
+            <PanelCompartir autoId={nuevo.id} titulo={`${nuevo.marca} ${nuevo.modelo} ${nuevo.anio} · $ ${nuevo.precio.toLocaleString("es-AR")}`} tamano="grande" />
+          </section>
+        ) : null;
+      })()}
 
       <nav className="mt-6 grid grid-cols-2 gap-2 sm:grid-cols-4">
         {pestañas.map((p) => (

@@ -12,6 +12,7 @@ import { Gallery } from "@/components/Gallery";
 import { Icon, WhatsAppIcon } from "@/components/Icon";
 import { BotonFavorito } from "@/components/cuenta/ClienteContext";
 import { AgendarVisita } from "@/components/AgendarVisita";
+import { BotonCompartir } from "@/components/Compartir";
 
 type Params = Promise<{ slug: string }>;
 
@@ -21,6 +22,14 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   return {
     title: `${tituloAuto(auto)} ${auto.anio}`,
     description: `${auto.marca} ${auto.modelo} ${auto.anio}, ${formatKm(auto.km)}, ${auto.transmision}. ${formatPrecio(auto.precio)}. ${auto.descripcion}`,
+    // Vista previa al compartir el link (WhatsApp, Facebook, Instagram)
+    openGraph: {
+      title: `${auto.marca} ${auto.modelo} ${auto.anio} · ${formatPrecio(auto.precio)}`,
+      description: `${formatKm(auto.km)} · ${auto.transmision} · ${auto.combustible}`,
+      images: auto.fotos[0] ? [{ url: auto.fotos[0] }] : undefined,
+      type: "website",
+      locale: "es_AR",
+    },
   };
 }
 
@@ -178,7 +187,10 @@ export default async function AutoPage({ params }: { params: Params }) {
                 <WhatsAppIcon className="size-5" /> Me interesa este auto
               </a>
               {auto.estado === "publicado" && <AgendarVisita autoId={auto.id} titulo={titulo} />}
-              <BotonFavorito autoId={auto.id} conTexto className="btn-borde w-full" />
+              <div className="grid grid-cols-2 gap-2">
+                <BotonFavorito autoId={auto.id} conTexto className="btn-borde w-full px-2!" />
+                <BotonCompartir autoId={auto.id} titulo={`${auto.marca} ${auto.modelo} ${auto.anio} · ${formatPrecio(auto.precio)}`} className="btn-borde w-full px-2!" />
+              </div>
             </div>
 
             <ul className="mt-5 space-y-2.5 border-t border-linea pt-4 text-sm text-stone-700">

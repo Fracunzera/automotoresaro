@@ -10,6 +10,7 @@ import { ESTADO_TEXTO } from "@/lib/tipos";
 import { formatKm, formatNumero } from "@/lib/utils";
 import { CarImage } from "../CarImage";
 import { Confirmar } from "./Confirmar";
+import { BotonCompartir } from "../Compartir";
 import { CampoPesos, Casilla, Opciones } from "./Campos";
 
 export type FilaAuto = {
@@ -179,6 +180,9 @@ export function ListaAutos({ filas, esAdmin }: { filas: FilaAuto[]; esAdmin: boo
               )}
               {(a.estado === "publicado" || a.estado === "reservado") && (
                 <a href={`/autos/${a.slug}`} target="_blank" className="btn-g border-2 border-stone-300 bg-white hover:border-tinta">Ver en la página</a>
+              )}
+              {(a.estado === "publicado" || a.estado === "reservado") && (
+                <BotonCompartir autoId={a.id} titulo={`${a.marca} ${a.modelo} ${a.anio} · $ ${formatNumero(a.precio)}`} tamano="grande" className="btn-g border-2 border-stone-300 bg-white hover:border-tinta" />
               )}
             </div>
           </li>
